@@ -7,6 +7,7 @@ they have been checked on this service.
 ## Phase 0: playback spike (blocks everything else)
 
 - [x] Shell loads the site signed out, with the layer on it
+- [x] The sign-in page opens and its email field takes the on-screen keyboard
 - [ ] Andrew signs in by hand in the shell
 - [ ] A title plays: read `spike-report.json`
 - [ ] Record the outcome in `DECISIONS.md`: this shell works, or switch to driving installed Chromium

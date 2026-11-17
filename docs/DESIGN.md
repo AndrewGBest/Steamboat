@@ -40,8 +40,8 @@ standard path untouched, and the app says honestly what it is.
 | | Tropic Video | Steamboat |
 |---|---|---|
 | Start address | the other service's site | `https://www.disneyplus.com/` |
-| Sign-in | on a separate family of account domains | on the service's own domain: `/login` redirects to `/identity/login` on the same host [Sourced: `curl`, 2026-11-17] |
-| Allowlist | service plus 23 account domains | one domain |
+| Sign-in | on a separate family of account domains | starts on the service's own domain (`/login` redirects to `/identity/login`) [Sourced: `curl`, 2026-11-17], then moves to the parent company's login host |
+| Allowlist | service plus 23 account domains | the service's domain plus one login host, which the sign-in page sends the window to [Sourced: seen in the shell, 2026-11-17] |
 | Adapter | revision 3, eight selectors | empty; nothing has been observed signed in |
 | First screen signed out | a redirect the automation guard blocks | a sign-up offer page with a privacy-choices pop-up; it loads under `--automation` [Sourced: run on this machine, 2026-11-17] |
 | Guard words | that service's upsell wording | plan, bundle and add-on wording added [Guess: the signed-in site's wording has not been seen] |

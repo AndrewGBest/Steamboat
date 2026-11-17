@@ -2,11 +2,14 @@
 // service; anything else is refused rather than opened.
 const SERVICE_HOSTS = ['disneyplus.com'];
 
-// Sign-in is on the service's own domain: a signed-out request for /login is
-// redirected to /identity/login on the same host (seen with curl, 2026-11-17).
-// Nothing is added here without seeing the app refuse a page a person needs;
-// a refused navigation is logged and shown, so a missing domain is noticed.
-const ACCOUNT_DOMAINS = new Set<string>([]);
+// Sign-in starts on the service's own domain (/login redirects to
+// /identity/login, seen with curl) and then sends the window to the parent
+// company's login host: with only the service's domain allowed, the app
+// refused "login.disney.com/authorize" and the page had no form (seen in the
+// shell, 2026-11-17). That one host is allowed, not the domain above it.
+// Nothing else is added without seeing the app refuse a page a person needs;
+// a refused navigation is logged and shown, so a missing host is noticed.
+const ACCOUNT_DOMAINS = new Set<string>(['login.disney.com']);
 
 function matchesDomain(host: string, domain: string): boolean {
   return host === domain || host.endsWith(`.${domain}`);

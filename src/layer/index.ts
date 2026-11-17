@@ -8,7 +8,7 @@ import { installPurchaseGuard } from './guard/purchase-guard';
 import { startPolling } from './input/gamepad';
 import { keyToAction, type Mode } from './input/keys';
 import { aboutTitle, HELP, NOTICE } from '../shared/about';
-import { isSecretField, OskModel } from '../shared/osk';
+import { isSecretField, oskDock, OskModel } from '../shared/osk';
 import { InjectedKeys, isNativePlayerKey, playerKeyFor, playerKeyInfo, type PlayerKey } from '../shared/player-keys';
 import { findMainVideo, isPlayerActive, playerScope } from './player';
 import { coveredByScreen, edgeControl, isVisible, openDialog, SpatialNavigator } from './spatial/navigator';
@@ -169,7 +169,8 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   let oskOpen = false;
   let aboutOpen = false;
   let oskSubmit = 'enter';
-  const drawOsk = (): void => overlay.keyboard(oskOpen ? osk.rows : null, { row: osk.row, index: osk.index }, oskSubmit);
+  let oskSide: 'top' | 'bottom' = 'bottom';
+  const drawOsk = (): void => overlay.keyboard(oskOpen ? osk.rows : null, { row: osk.row, index: osk.index }, oskSubmit, oskSide);
   const isSearchField = (el: Element): boolean => {
     try {
       return el.matches([...adapter.selectors.searchInput, ...GENERIC_SEARCH].join(','));
@@ -181,6 +182,9 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
     if (!oskOpen) osk.reset();
     // The key says what it does: it only searches in a search field.
     oskSubmit = isSearchField(field) ? 'search' : 'enter';
+    // Keep the keyboard off the field, so what is typed can be seen.
+    const box = field.getBoundingClientRect();
+    oskSide = oskDock({ top: box.top, bottom: box.bottom }, doc.defaultView?.innerHeight ?? 0);
     oskOpen = true;
     drawOsk();
   };

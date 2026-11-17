@@ -167,6 +167,7 @@ describe('navigation allowlist', () => {
   it('allows the service and its account pages over https only', () => {
     expect(isAllowedUrl('https://www.disneyplus.com/')).toBe(true);
     expect(isAllowedUrl('https://www.disneyplus.com/identity/login')).toBe(true);
+    expect(isAllowedUrl('https://login.disney.com/authorize')).toBe(true);
     expect(isAllowedUrl('http://www.disneyplus.com/')).toBe(false);
   });
 
@@ -174,6 +175,8 @@ describe('navigation allowlist', () => {
     expect(isAllowedUrl('https://disneyplus.com.evil.example/')).toBe(false);
     expect(isAllowedUrl('https://evildisneyplus.com/')).toBe(false);
     expect(isAllowedUrl('https://www.disney.com/')).toBe(false);
+    expect(isAllowedUrl('https://disney.com/')).toBe(false);
+    expect(isAllowedUrl('https://login.disney.com.evil.example/')).toBe(false);
     expect(isAllowedUrl('https://user:pw@www.disneyplus.com/')).toBe(false);
     expect(isAllowedUrl('https://example.com/')).toBe(false);
     expect(isAllowedUrl('javascript:alert(1)')).toBe(false);

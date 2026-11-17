@@ -31,19 +31,35 @@ No trademark register was searched.
 anything else from that film, in the icon, the app or the documents.
 **Reopen:** before promoting the project publicly, have the name cleared.
 
-## 2026-11-17: The allowlist is the service's one domain
+## 2026-11-17: The allowlist is the service's domain and one login host
 
-**Decision:** only `disneyplus.com` and its subdomains may be navigated to.
-No account domains.
-**Reason:** a signed-out request for `/login` is redirected to
-`/identity/login` on the same host (seen with `curl`). Tropic Video needed a
-list of account domains because its service signs in elsewhere; nothing shows
-that here.
-**Not known:** whether sign-in with a one-time code, a partner or a bundle
-sends the window to another domain. If it does, the app refuses the page,
-says so on screen and logs the host.
-**Reopen if:** Andrew's sign-in is refused; add exactly the domain the log
+**Decision:** the window may go to `disneyplus.com` and its subdomains, and
+to the single host `login.disney.com`. Not `disney.com` as a whole.
+**Reason:** the first version allowed the service's domain only, because
+`/login` redirects to `/identity/login` on the same host (seen with `curl`).
+In the shell that page then sent the window to `login.disney.com/authorize`;
+the app refused it, logged it, and the page was left without a form. With
+that host allowed the email form appears (both seen on 2026-11-17).
+**Not known:** whether the later steps (password, one-time code, a partner or
+bundle sign-in) send the window anywhere else. The agent stops at the email
+field. If they do, the app refuses the page, says so on screen and logs the
+host.
+**Reopen if:** Andrew's sign-in is refused; add exactly the host the log
 names, with a test.
+
+## 2026-11-17: The on-screen keyboard moves to the top when it would cover its field
+
+**Decision:** the keyboard sits at the bottom of the screen unless it would
+cover more of the field being typed into there than at the top
+(`oskDock` in `src/shared/osk.ts`, unit-tested).
+**Reason:** on the sign-in page the email field is in the lower half of the
+screen and the keyboard hid it completely, so nothing typed could be seen.
+Checked on that page in the shell: the keyboard is at the top and the field
+is clear below it.
+**Shared code:** Tropic Video has the same keyboard and has not been given
+this change.
+**Reopen if:** a field in the middle of a screen is still half covered; then
+scroll the page as well.
 
 ## 2026-11-17: Purchase-guard wording for this service is a guess
 

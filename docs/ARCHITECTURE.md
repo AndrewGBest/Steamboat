@@ -1,7 +1,8 @@
 # Architecture
 
 How the code is actually built. It is Tropic Video's architecture unchanged;
-only the start address, the allowlist, the adapter file and the wording differ.
+only the start address, the allowlist, the adapter file and the wording differ,
+plus where the on-screen keyboard sits (`DECISIONS.md`).
 For why this approach was chosen, see `DESIGN.md`.
 
 ## Processes
@@ -67,7 +68,7 @@ empty today because no selector has been observed on this service's live site ye
 
 | Mechanism | Where | Tested by |
 |---|---|---|
-| Navigation allowlist (the service's one domain, https only) | `src/main/hosts.ts` | `test/safety.test.ts` |
+| Navigation allowlist (the service's domain and one login host, https only) | `src/main/hosts.ts` | `test/safety.test.ts` |
 | Permission allowlist (fullscreen, protected media only) | `src/main/index.ts` | review |
 | Purchase guard in automation mode (clicks, key activation, form submits, URLs) | `src/layer/guard`, `src/main/index.ts` | unit + e2e |
 | Diagnostics outline carries no text, labels, links or IDs | `src/layer/diagnostics/outline.ts` | `test/safety.test.ts` |
