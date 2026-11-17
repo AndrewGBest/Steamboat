@@ -3,12 +3,13 @@
 An unofficial TV-style front end for watching Disney+ on a Linux HTPC,
 driven by a game controller, remote or keyboard.
 
-**Status: early development.** The code began as a copy of
+**Status: early development, usable for testing.** The code began as a copy of
 [Tropic Video](https://github.com/AndrewGBest/Tropic-Video), the same kind of app for
-another service. On one setup (a Fedora virtual machine) sign-in, browsing the
-home and title pages, playback, and the player's controls and menus work from
-a keyboard-style remote. Search, seeking and much else have not been checked,
-and there are no packages yet.
+another service. On one setup (a Fedora virtual machine) sign-in, browsing,
+search, playback, seeking, the player's controls and menus, and next episode
+work from a keyboard-style remote. It has not been tried on a real TV, with a
+physical game controller, or signed in with only a remote, and there is no
+release yet.
 See [docs/STATUS.md](docs/STATUS.md) for exactly what has and has not been
 checked.
 
