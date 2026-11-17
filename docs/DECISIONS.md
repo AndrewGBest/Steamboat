@@ -161,6 +161,9 @@ the title page.
 
 ## 2026-11-17: Smaller navigation rules added from the live site
 
+- **Adapter revision 2:** the top bar's search link as `searchOpen`
+  (`home-nav.txt`); the search key did nothing without it. The search page's
+  field is found by the generic rules.
 - **Adapter revision 1:** the row arrows (`arrow-left`, `arrow-right`), shown
   by `test/fixtures/outlines/home-rows.txt`. Without it Down landed on each
   row's arrow instead of a card.

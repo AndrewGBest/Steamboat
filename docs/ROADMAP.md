@@ -21,7 +21,7 @@ they have been checked on this service.
 - [ ] Profile picker, including a profile PIN
 - [x] Home: bar, banner, rows, sideways scrolling (row memory not looked at)
 - [x] Title page: buttons, tabs, episode cards (season switching not tried)
-- [ ] Search with the on-screen keyboard
+- [x] Search with the on-screen keyboard
 - [x] Outlines captured; first evidence-based adapter revision where the generic rules fail
 
 **Done when:** home → title → play using only a remote, on the live site.

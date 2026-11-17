@@ -70,6 +70,14 @@ describe('the adapter is backed by outlines', () => {
     }
   });
 
+  it('search: the opener is the one link in the top bar that carries the search icon', () => {
+    const dom = fromOutline('home-nav.txt');
+    const openers = dom.querySelectorAll(adapter.selectors.searchOpen[0]!);
+    expect(openers).toHaveLength(1);
+    expect(openers[0]!.tagName).toBe('A');
+    expect(openers[0]!.querySelector('[data-testid="icon-search"]')).not.toBeNull();
+  });
+
   it('row arrows: the banner and a card row each have one previous and one next button beside their strip', () => {
     const dom = fromOutline('home-rows.txt');
     const prev = adapter.selectors.rowPrev[0]!;

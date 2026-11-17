@@ -1,13 +1,15 @@
 {
   "id": "disneyplus",
   "schema": 1,
-  "revision": 1,
+  "revision": 2,
   "verified": true,
   "note": "No selector in this file may be added without a diagnostics outline from the live site that shows it (Hard rule 7). Evidence is in test/fixtures/outlines/ (captured 2026-11-17) and is checked by test/adapter-evidence.test.ts. Everything else is empty: the generic heuristics are in use.",
   "selectors": {
     "extraFocusable": [],
     "searchInput": [],
-    "searchOpen": [],
+    "searchOpen": [
+      "a[data-testid=\"navigation-item-search\"]"
+    ],
     "rowPrev": [
       "button[data-testid=\"arrow-left\"]"
     ],

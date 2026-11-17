@@ -1,0 +1,10 @@
+# Home page, signed in: the end of the top bar. Captured with Ctrl+Shift+D on 2026-11-17.
+# Trimmed; hashed class names and wrappers that carry no attributes were removed.
+li
+  a[aria-label:9][tabindex="0"][href:17][data-testid="navigation-item-4-:text"]
+    span
+      img[src:167][alt:0]
+    p{text:9}
+a[aria-label:6][tabindex="0"][href:14][data-testid="navigation-item-search"]
+  span
+    svg[aria-hidden="true"][role="img"][data-testid="icon-search"]

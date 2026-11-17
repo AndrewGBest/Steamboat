@@ -35,7 +35,8 @@ app under `--automation`. Reasons for each change are in `DECISIONS.md`.
 | Player: Down or Up shows the controls and every one can be reached: progress bar, back, title, Skip, rewind, play, forward, mute, next, settings, fullscreen | walk tool on 42 |
 | Player: settings opens with focus in its menu; the subtitles list walks and scrolls with focus | walk tool on 42: nine entries in order, each on screen. **No option was chosen** |
 | Back: first leaves the controls, second leaves the player for the title page | paths read after each press, on 42 |
-| Unit tests, rule check, end-to-end on fixtures | 201 tests; e2e all ok on 42 |
+| Search from the remote | on 42: the search key opened the search page (adapter revision 2: the top bar's search link) with the field focused; two letters picked on the on-screen keyboard reached the field and the results changed (100 cards to 35); Back put the keyboard away; Down, Right walked the results grid |
+| Unit tests, rule check, end-to-end on fixtures | 202 tests; e2e all ok on 42 |
 
 ### NOT verified
 
@@ -46,8 +47,7 @@ app under `--automation`. Reasons for each change are in `DECISIONS.md`.
 - What Andrew saw and heard in his run. The report shows two play pages with
   audio errors (that was Electron 44) and a third that played.
 - Picture above 854x480; the advertising tier; live or scheduled streams.
-- Search and the on-screen keyboard on this site, the Watchlist, Movies,
-  Series and Originals pages, the profile picker and menu, a profile PIN.
+- The Watchlist, Movies, Series and Originals pages, the profile picker and menu, a profile PIN.
 - Skip (seen and reachable, not pressed), next episode, the audio menu.
 - The privacy pop-up from the remote beyond moving in it (Andrew answered it
   by hand), and the rest of sign-in with the on-screen keyboard.
@@ -66,7 +66,7 @@ app under `--automation`. Reasons for each change are in `DECISIONS.md`.
 
 1. **Andrew:** `git pull`, `npm ci`, `npm start` in `~/Steamboat` and try it
    by hand: was picture and sound right, and do Left and Right seek?
-2. Agent: search and the keyboard, the other browse pages, the profile menu,
+2. Agent: the other browse pages, the profile menu,
    seeking read from the player's own time display, Skip and next episode.
 3. Agent: build the packages on Electron 42 and launch one.
 
