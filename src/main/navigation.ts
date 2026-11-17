@@ -12,6 +12,29 @@ export function blockReason(url: string, opts: { dev: boolean; automation: boole
   return null;
 }
 
+/**
+ * The https form of a plain-http address that would be allowed as https, or
+ * null. The service's own front page redirects a signed-in visitor to an
+ * http address on its own host (seen 2026-11-17); a browser that knows the
+ * host is https-only upgrades it silently. The app never loads plain http, so
+ * it loads this instead of refusing.
+ */
+export function httpsUpgrade(url: string, opts: { dev: boolean; automation: boolean }): string | null {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'http:' || u.username || u.password) return null;
+  // Dev fixtures on localhost are allowed as http already; leave them alone.
+  if (blockReason(url, opts) === null) return null;
+  u.protocol = 'https:';
+  u.port = '';
+  const upgraded = u.toString();
+  return blockReason(upgraded, opts) === null ? upgraded : null;
+}
+
 const MAX_DESCRIPTION = 80;
 
 /** Host and path only. Queries and fragments can carry tokens, so they are never shown or logged. */
@@ -23,7 +46,8 @@ export function describeBlockedUrl(url: string): string {
     return '(unreadable address)';
   }
   if (!u.host) return `(${u.protocol} address)`;
-  const text = u.host + u.pathname;
+  // An address refused only for not being https looks allowed without its scheme.
+  const text = (u.protocol === 'https:' ? '' : `${u.protocol}//`) + u.host + u.pathname;
   return text.length > MAX_DESCRIPTION ? `${text.slice(0, MAX_DESCRIPTION)}…` : text;
 }
 

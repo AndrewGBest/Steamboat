@@ -17,8 +17,7 @@ import {
   noticePageUrl,
   offlinePageUrl,
   startingPageUrl,
-  retryDelaySeconds,
-} from './navigation';
+  retryDelaySeconds, httpsUpgrade } from './navigation';
 
 const HOME_URL = 'https://www.disneyplus.com/';
 const argv = process.argv.slice(1);
@@ -152,6 +151,14 @@ function createWindow(ready: Promise<void>): BrowserWindow {
   const allowed = (url: string): boolean => {
     const reason = blockReason(url, options);
     if (!reason) return true;
+    // Plain http on an allowed host: load the https page instead (see httpsUpgrade).
+    const upgraded = httpsUpgrade(url, options);
+    if (upgraded) {
+      setImmediate(() => {
+        if (!wc.isDestroyed()) void wc.loadURL(upgraded);
+      });
+      return false;
+    }
     console.error(`[steamboat] blocked navigation (${reason}): ${describeBlockedUrl(url)}`);
     if (pageShown) {
       wc.send('steamboat:notice', blockedMessage(reason));
@@ -167,7 +174,12 @@ function createWindow(ready: Promise<void>): BrowserWindow {
   wc.on('will-navigate', (e, url) => {
     if (!allowed(url)) e.preventDefault();
   });
-  wc.on('will-redirect', (e, url) => {
+  // The allowlist is about where the window goes. Frames inside the page are
+  // the site's own business (Hard rule 4): refusing their redirects cancelled
+  // the site's measurement frames and put a "blocked" message on screen for
+  // something nobody had pressed (seen signed in, 2026-11-17).
+  wc.on('will-redirect', (e, url, _isInPlace, isMainFrame) => {
+    if (!isMainFrame) return;
     if (!allowed(url)) e.preventDefault();
   });
   // No pop-ups: an allowed link opens in the one window, anything else is dropped.
