@@ -102,3 +102,9 @@ export function playerIsOwnPage(browseUrl: string | null, currentUrl: string): b
     return false;
   }
 }
+
+/** A slider at least half as wide as the screen: the player's progress bar, not a volume control. */
+export function isSeekBar(el: Element, view: Window): boolean {
+  const slider = el.getAttribute('role') === 'slider' || (el instanceof HTMLInputElement && el.type === 'range');
+  return slider && el.getBoundingClientRect().width >= view.innerWidth / 2;
+}

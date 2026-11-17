@@ -11,7 +11,7 @@ import { aboutTitle, HELP, NOTICE } from '../shared/about';
 import { isSecretField, oskDock, OskModel } from '../shared/osk';
 import { deepActiveElement, deepContains } from './spatial/deep';
 import { InjectedKeys, isNativePlayerKey, playerKeyFor, playerKeyInfo, type PlayerKey } from '../shared/player-keys';
-import { findMainVideo, isPlayerActive, playerIsOwnPage, playerScope } from './player';
+import { findMainVideo, isPlayerActive, isSeekBar, playerIsOwnPage, playerScope } from './player';
 import { coveredByScreen, edgeControl, isVisible, openDialog, SpatialNavigator } from './spatial/navigator';
 import { HOST_TAG, Overlay } from './ui/overlay';
 import { installSpikeProbes } from './spike';
@@ -286,6 +286,14 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
     lastControlKeyAt = Date.now();
     revealControls();
     if (onPlayerControl()) {
+      // On the progress bar, left and right are sent to the site as its seek
+      // keys: nothing lies beside a bar that spans the screen. (On the live
+      // site the focused bar answers them with its own small steps.)
+      const f = nav.focused;
+      if (f && (dir === 'left' || dir === 'right') && isSeekBar(f, view)) {
+        pressPlayerKey(dir === 'left' ? 'seekBack' : 'seekForward');
+        return;
+      }
       if (!nav.move(dir)) overlay.feedback(dir);
       return;
     }
@@ -343,8 +351,10 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
         (close as HTMLElement).click();
         return;
       }
-      // A player that is a page of its own is left like any page.
-      if (playerIsOwnPage(browseUrl, view.location.href) && view.history.length > 1) {
+      // A player that is a page of its own is left like any page, once any
+      // menu it has open is closed with the site's own Escape key.
+      const menuOpen = nav.candidates().some((el) => el.matches(MENU_ENTRY));
+      if (!menuOpen && playerIsOwnPage(browseUrl, view.location.href) && view.history.length > 1) {
         view.history.back();
         return;
       }
