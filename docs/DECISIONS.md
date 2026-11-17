@@ -264,9 +264,24 @@ move's duration on a long page, memory, anything on real hardware.
 - **Software video decoding on a weak box.** `hardwareDecode` is an opt-in
   switch that has not been tried on real hardware. The site's background
   previews are the largest load and are the site's to switch off.
-- **Two copies of the shared code.** Steamboat is now well ahead of Tropic
-  Video (shadow roots, idle behaviour, a dozen navigation rules). The longer
-  this lasts the harder the merge. A shared package, or porting back, is
-  Andrew's decision.
+- **Two copies of the shared code.** Ported to Tropic Video on 2026-11-17 at
+  Andrew's request (see the entry below), so the two are level again apart
+  from what belongs to each service. They will drift again with the next
+  change made in only one; a shared package is still the lasting answer.
 - **Disney's terms** on modified clients and automated use: unchanged from
   `LEGAL-GUARDRAILS.md`, still unreviewed by a lawyer.
+
+## 2026-11-17: The shared-code changes were ported to Tropic Video
+
+**Decision (Andrew):** port what makes sense, leave what does not.
+**Ported:** the idle changes, the navigation rules, shadow-root support, the
+keyboard's position, own-page Back and the extra history step, the https
+upgrade, frame redirects left alone, the user `adapter.json`, the adapter
+report in outlines, the account guard words, the search fallback, the
+`hardwareDecode` setting and the walk tool.
+**Not ported:** the Electron 42 pin and the end-to-end check that enforces
+it (Tropic Video's service plays on 44), and everything about this service
+(allowlist, adapter, outlines, notice, plan and bundle guard words).
+**Checked there:** its tests, and a run on its live site. The full record is
+in Tropic Video's own `DECISIONS.md`.
+**From now on:** a fix to shared code is made in both, in the same session.

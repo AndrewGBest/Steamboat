@@ -2,6 +2,13 @@
 
 Update this at the end of every working session. Newest first.
 
+## 2026-11-17, sixth round: ported to Tropic Video
+
+The shared-code changes of this project were ported to Tropic Video, tested
+there and pushed to its `main` (not released). Nothing changed in Steamboat's
+code. What went and what stayed is in `DECISIONS.md`. Earlier notes below
+that say a change "has not been made in Tropic Video" are out of date.
+
 ## 2026-11-17, fifth round: small fixes and a review of the whole project
 
 Andrew asked for the noted small things to be fixed and every choice to be
@@ -35,7 +42,7 @@ service changing. The review and its table of changes are in `DECISIONS.md`
 1. **Andrew:** try it (`npm start`, or the AppImage from a new "Build
    packages" run): picture and sound, how the ring follows, and on the TV
    box whether `"hardwareDecode": true` helps.
-2. Decide what to do about the two copies of shared code.
+2. (Done: the shared code was ported to Tropic Video.)
 3. Agent: Skip intro when an episode with one is at hand; a first release
    when asked.
 
