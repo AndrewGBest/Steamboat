@@ -35,9 +35,12 @@ export function deepClosest(el: Element, selector: string): Element | null {
 
 /** True when `inner` is `outer` or is drawn inside it, shadow roots included. */
 export function deepContains(outer: Element, inner: Element): boolean {
-  for (let node: Element | null = inner; node; node = composedParent(node)) {
-    if (node === outer) return true;
+  // One native check per shadow root on the way out, not one per ancestor:
+  // this runs for every pair of candidates on every move.
+  for (let node: Element | null = inner; node; ) {
     if (outer.contains(node)) return true;
+    const root = node.getRootNode();
+    node = root instanceof ShadowRoot ? root.host : null;
   }
   return false;
 }

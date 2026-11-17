@@ -71,7 +71,14 @@ export interface NavigatorOptions {
   scope?: () => Element | null;
 }
 
-export function isVisible(el: Element, view: Window): boolean {
+/**
+ * `faded` remembers, for one pass over many controls, whether each ancestor
+ * is transparent or sits inside something that is: siblings share almost all
+ * of their ancestors, and asking for each one's style again is most of the
+ * cost of a move on a long page. With it the search goes all the way up;
+ * without it, twelve levels.
+ */
+export function isVisible(el: Element, view: Window, faded?: Map<Element, boolean>): boolean {
   const r = el.getBoundingClientRect();
   if (r.width < 4 || r.height < 4) return false;
   const style = view.getComputedStyle(el);
@@ -89,11 +96,24 @@ export function isVisible(el: Element, view: Window): boolean {
   // Opacity is not inherited in the computed style, but a transparent ancestor
   // hides everything in it. Seen on the live site: the slides of a carousel
   // are stacked in one place and all but one sit in a fully transparent wrapper.
+  const walked: Element[] = [];
+  let hidden = false;
   let node = composedParent(el);
-  for (let i = 0; node && i < 12; i++, node = composedParent(node)) {
-    if (view.getComputedStyle(node).opacity === '0') return false;
+  for (let i = 0; node && (faded || i < 12); i++, node = composedParent(node)) {
+    const known = faded?.get(node);
+    if (known !== undefined) {
+      hidden = known;
+      break;
+    }
+    walked.push(node);
+    if (view.getComputedStyle(node).opacity === '0') {
+      hidden = true;
+      break;
+    }
   }
-  return true;
+  // Everything walked lies under where the search ended, so it shares the answer.
+  if (faded) for (const n of walked) faded.set(n, hidden);
+  return !hidden;
 }
 
 /**
@@ -245,6 +265,9 @@ export function scrollWithinList(el: Element, view: Window): void {
 
 const FOOTER = 'footer, [role="contentinfo"]';
 
+/** What a menu's entries are. */
+export const MENU_ENTRY = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="option"], [role="radio"]';
+
 /** Moves closer together than this are a held key (or a very quick thumb). */
 const RAPID_MS = 220;
 
@@ -281,6 +304,7 @@ export class SpatialNavigator {
     const scope = this.opts.scope?.() ?? null;
     const skip = this.skipSelector();
     const seen = new Set<Element>();
+    const faded = new Map<Element, boolean>();
     for (const el of deepQueryAll(scope ?? this.doc, selector)) {
       if (this.opts.ignoreWithin && deepClosest(el, this.opts.ignoreWithin)) continue;
       if (skip && el.matches(skip)) continue;
@@ -288,7 +312,7 @@ export class SpatialNavigator {
         const r = el.getBoundingClientRect();
         if (r.bottom < above || r.top > below) continue;
       }
-      if (!isVisible(el, view)) continue;
+      if (!isVisible(el, view, faded)) continue;
       // Too small to aim at or to see a ring on from a couch (a carousel's
       // row of dots, six to nine pixels high on the live site).
       const size = el.getBoundingClientRect();
@@ -318,7 +342,8 @@ export class SpatialNavigator {
     }
     // Drop wrappers that contain another candidate, so a card and the link
     // inside it do not both receive focus.
-    const inner = [...seen].filter((el) => ![...seen].some((other) => other !== el && deepContains(el, other)));
+    const list = [...seen];
+    const inner = list.filter((el) => !list.some((other) => other !== el && deepContains(el, other)));
     // Drop backdrops too: a link stretched over a whole banner, with the
     // banner's real buttons lying on top of it. Seen on the live site, where
     // such a link swallowed sideways movement.
@@ -335,7 +360,8 @@ export class SpatialNavigator {
       const held = bySpot.get(spot);
       if (!held || rank(el) > rank(held)) bySpot.set(spot, el);
     }
-    return front.filter((el) => [...bySpot.values()].includes(el));
+    const kept = new Set(bySpot.values());
+    return front.filter((el) => kept.has(el));
   }
 
   private skipSelector(): string | null {
@@ -490,6 +516,14 @@ export class SpatialNavigator {
         const flowing = others.filter((el) => !isPinned(el, view, cache));
         if (rowOf(from, view) || pickNext(toRect(from), flowing.map(toRect), dir) !== -1) others = flowing;
       }
+    }
+    // Up and down inside a menu stay in the menu while it has an entry that
+    // way. Seen on the live site: the player's menus lie over its control
+    // row, and the row's buttons were nearer than the next entry.
+    if ((dir === 'up' || dir === 'down') && from.matches(MENU_ENTRY)) {
+      const home = from.getRootNode();
+      const peers = others.filter((el) => el.getRootNode() === home && el.matches(MENU_ENTRY));
+      if (pickNext(toRect(from), peers.map(toRect), dir) !== -1) others = peers;
     }
     const i = pickNext(toRect(from), others.map(toRect), dir);
     if (i === -1) return null;
