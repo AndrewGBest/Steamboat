@@ -40,7 +40,7 @@ they have been checked on this service.
 ## Phase 3: HTPC and release
 
 - [ ] Sign-in with only a remote (Andrew)
-- [ ] Packages built in CI, launched once
+- [x] Packages built in CI; the AppImage launched and played (tarball and Flatpak not run)
 - [ ] First release, when Andrew asks for one
 - [ ] Lawyer review of `LEGAL-GUARDRAILS.md` before promoting the project
 

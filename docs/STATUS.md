@@ -16,7 +16,7 @@ under `--automation`, with a step-by-step tool that reads state after each key.
 | The profile menu opens, walks and closes | Enter opened it (expanded), Down went through four profiles and the options, Back closed it. **No profile was switched** and nothing in it was pressed |
 | Movies, Series and Originals pages | six rows down, along a row, and back up to the bar on each |
 | Home: the first Down lands on the banner's main button; the banner's dots are no longer targets | walk tool, after the change |
-| Packages build on Electron 42 | "Build packages" run 44128461580 green on GitHub. Not downloaded or launched |
+| The CI-built AppImage runs and plays | "Build packages" run 44132990283 (Electron 42): the AppImage was downloaded and started with `--automation`: fullscreen, signed-in home page (it shares the dev build's data folder), remote moved focus, a title played for twenty seconds and Back returned to its page. Removed afterwards. **The tarball and the Flatpak were built and not run** |
 | Tests | 208 unit tests, rule check, end-to-end all ok |
 
 A correction to the round before: the video element's clock **is** steady
@@ -31,7 +31,8 @@ the reverse: right after a seek it is correct, between seeks it goes stale.
   episode, the advertising tier, live streams.
 - The Watchlist page with something in it (it showed one tab and the footer).
 - Switching profile, a profile PIN, the rest of sign-in by remote.
-- A packaged build actually running; the purchase guard's wording.
+- The tarball and the Flatpak bundle running; the purchase guard's wording.
+- Skip intro: one title was watched for its first minute and no Skip button came up.
 
 ### Found, not fixed
 
