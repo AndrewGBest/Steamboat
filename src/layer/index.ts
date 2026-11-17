@@ -2,7 +2,7 @@
 // it shares the DOM with the site but not its JavaScript, so the site cannot
 // tamper with it and it does not modify the site's own scripts.
 import type { Action, BridgeMessage, Direction, LayerOptions } from '../shared/actions';
-import { firstMatch, type SiteAdapter } from './adapter/adapter';
+import { adapterReport, firstMatch, type SiteAdapter } from './adapter/adapter';
 import { buildOutline, sanitizeUrl } from './diagnostics/outline';
 import { installPurchaseGuard } from './guard/purchase-guard';
 import { startPolling } from './input/gamepad';
@@ -12,7 +12,7 @@ import { isSecretField, oskDock, OskModel } from '../shared/osk';
 import { deepActiveElement, deepContains } from './spatial/deep';
 import { InjectedKeys, isNativePlayerKey, playerKeyFor, playerKeyInfo, type PlayerKey } from '../shared/player-keys';
 import { findMainVideo, isPlayerActive, isSeekBar, playerIsOwnPage, playerScope } from './player';
-import { coveredByScreen, edgeControl, isVisible, openDialog, SpatialNavigator } from './spatial/navigator';
+import { coveredByScreen, edgeControl, isVisible, MENU_ENTRY, openDialog, SpatialNavigator } from './spatial/navigator';
 import { HOST_TAG, Overlay } from './ui/overlay';
 import { installSpikeProbes } from './spike';
 
@@ -23,6 +23,12 @@ export interface LayerDeps {
   send: (msg: BridgeMessage) => void;
 }
 
+/**
+ * Controls that lead to search when the adapter names none, or names one the
+ * site has since renamed: a link whose address says search. Only a link, so
+ * nothing is pressed whose effect is not written on it.
+ */
+const GENERIC_SEARCH_OPEN = ['a[href$="/search" i]', 'a[href*="/search?" i]'];
 const GENERIC_SEARCH = ['input[type="search"]', '[role="search"] input', 'input[name*="search" i]', 'input[aria-label*="search" i]'];
 
 function isTextEntry(el: Element | null): boolean {
@@ -42,9 +48,6 @@ export interface Layer {
   away: () => void;
   stop: () => void;
 }
-
-/** What a menu's entries are, when one opens from a player control. */
-const MENU_ENTRY = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="option"], [role="radio"]';
 
 export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   const view = doc.defaultView;
@@ -146,10 +149,16 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
     }
     (hit.control as HTMLElement).click();
     view.clearTimeout(edgeTimer);
-    edgeTimer = view.setTimeout(() => {
-      const f = nav.focused;
-      if (!f || !isVisible(f, view)) nav.focusFirstIn(hit.container);
-    }, 700);
+    // Twice: the new slide can still be sliding in at the first look, and
+    // what was picked then may itself be put away when it settles.
+    const settle = (again: boolean): void => {
+      edgeTimer = view.setTimeout(() => {
+        const f = nav.focused;
+        if (!f || !isVisible(f, view)) nav.focusFirstIn(hit.container);
+        if (again) settle(false);
+      }, 700);
+    };
+    settle(true);
   };
 
   /**
@@ -280,6 +289,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   const CONTROLS_LINGER_MS = 20_000;
   let lastControlKeyAt = 0;
   const keepAlive = view.setInterval(() => {
+    if (doc.hidden) return;
     if (Date.now() - lastControlKeyAt < CONTROLS_LINGER_MS && onPlayerControl()) revealControls();
   }, 1000);
   const moveInPlayer = (dir: Direction): void => {
@@ -379,7 +389,21 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
       pressPlayerKey('close');
       return;
     }
-    if (view.history.length > 1) view.history.back();
+    goBack();
+  };
+  // Going back a page. Some pages add a second history entry for themselves
+  // as they load (seen on the live site's title pages), and the first step
+  // back then changes nothing the user can see. One more step is taken when
+  // the address has not changed and no other key has come in.
+  let backTimer: number | undefined;
+  const goBack = (): void => {
+    if (view.history.length <= 1) return;
+    const before = view.location.pathname + view.location.search;
+    view.history.back();
+    view.clearTimeout(backTimer);
+    backTimer = view.setTimeout(() => {
+      if (view.location.pathname + view.location.search === before && !inPlayer() && !openDialog(doc)) view.history.back();
+    }, 600);
   };
 
   // Some sites keep the search field hidden until a control is activated.
@@ -402,7 +426,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
       nav.focus(input);
       return;
     }
-    const opener = visibleMatch(adapter.selectors.searchOpen);
+    const opener = visibleMatch([...adapter.selectors.searchOpen, ...GENERIC_SEARCH_OPEN]);
     if (!opener) return;
     (opener as HTMLElement).click();
     let tries = 0;
@@ -424,6 +448,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
     // overrides it (Back right after Enter must not have focus put back).
     view.clearTimeout(refocusTimer);
     view.clearTimeout(followTimer);
+    view.clearTimeout(backTimer);
     view.clearInterval(coverTimer);
     if (aboutOpen) {
       // The panel only needs closing; every other key waits until it is gone.
@@ -528,7 +553,9 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
         openSearch();
         break;
       case 'diagnostics':
-        send({ kind: 'diagnostics', outline: buildOutline(doc.documentElement), url: sanitizeUrl(view.location.href) });
+        // The first line says how much of the adapter still matches this page:
+        // a zero where there used to be matches is the site having changed.
+        send({ kind: 'diagnostics', outline: `# ${adapterReport(adapter, doc)}\n${buildOutline(doc.documentElement)}`, url: sanitizeUrl(view.location.href) });
         overlay.toast('Page outline saved (structure only, no text)');
         break;
       case 'settings':
@@ -591,6 +618,15 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   let lastPlaying = false;
   let lastAwayAt = 0;
   const playbackTimer = view.setInterval(() => {
+    // Minimised or behind another window: nothing to look after. Playback
+    // was paused on the way out, and the shell must hear that it stopped.
+    if (doc.hidden) {
+      if (lastPlaying) {
+        lastPlaying = false;
+        send({ kind: 'playback', playing: false });
+      }
+      return;
+    }
     const v = findMainVideo(doc, playerRoots);
     const playing = !!v && !v.paused && !v.ended;
     // Mark the player so the stylesheet can hide controls the site has disabled.
@@ -644,6 +680,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
       view.clearTimeout(dialogTimer);
       view.clearTimeout(hoverTimer);
       view.clearTimeout(edgeTimer);
+      view.clearTimeout(backTimer);
       stopPads();
       stopGuard();
       stopSpike();

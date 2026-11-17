@@ -665,3 +665,28 @@ describe('scrollWithinList', () => {
     expect(() => scrollWithinList(document.getElementById('plain')!, window)).not.toThrow();
   });
 });
+
+describe('inside a menu', () => {
+  it('up and down stay among its entries while there is one that way', () => {
+    document.body.innerHTML = `
+      <div>${card('one', 500, 100, 'role="menuitem"')}${card('two', 500, 170, 'role="menuitem"')}${card('three', 500, 400, 'role="menuitem"')}</div>
+      ${card('behind', 520, 250)}
+      ${card('below', 500, 480)}`;
+    const nav = new SpatialNavigator(document);
+    nav.focus(document.getElementById('two'));
+    nav.move('down');
+    expect(nav.focused?.id).toBe('three');
+    nav.move('down');
+    expect(nav.focused?.id).toBe('below');
+  });
+});
+
+describe('visibility with a shared memory of ancestors', () => {
+  it('gives the same answers as without it', () => {
+    document.body.innerHTML = `
+      <div><div>${card('a', 0, 0)}${card('b', 120, 0)}</div></div>
+      <div style="opacity: 0"><div>${card('c', 0, 100)}${card('d', 120, 100)}</div></div>`;
+    const nav = new SpatialNavigator(document);
+    expect(nav.candidates().map((el) => el.id)).toEqual(['a', 'b']);
+  });
+});

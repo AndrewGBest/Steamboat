@@ -2,6 +2,13 @@
 // AI agent, no click may reach a control that could spend money or start a
 // subscription. Ordinary users are never affected: this is only installed in
 // automation mode.
+/**
+ * Account matters an agent or script has no business in: leaving the account,
+ * or changing who is on it. These are also guarded by selector in the adapter;
+ * the words are here so the guard does not rest on the site keeping its markup.
+ */
+const ACCOUNT_WORDS = /\b(log ?out|sign ?out|(add|edit|delete|manage) profiles?|account( settings)?|billing|payment (method|details)|cancel (subscription|membership|plan))\b/i;
+
 const SPEND_WORDS =
   /\b(buy|rent|purchase|pre-?order|subscribe|subscription|free trial|start (your )?trial|sign up|upgrade|(choose|change|switch) (a |your )?plan|get the bundle|restart (your )?subscription|add[- ]on|(go )?ad[- ]free|add to (cart|basket)|place (your )?order|pay now|checkout|1-click)\b/i;
 
@@ -37,7 +44,7 @@ export function isSpendControl(target: Element, extraSelectors: readonly string[
   }
   const text = describe(control);
   // Long text means we climbed to a container, not a button; judge only real controls.
-  if (text.length <= 80 && SPEND_WORDS.test(text)) return true;
+  if (text.length <= 80 && (SPEND_WORDS.test(text) || ACCOUNT_WORDS.test(text))) return true;
   const href = control.getAttribute('href');
   if (href && looksLikeSpendUrl(href)) return true;
   if (control.closest('form[action]')) {
