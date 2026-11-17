@@ -181,6 +181,14 @@ export function isPinned(el: Element, view: Window, cache: Map<Element, boolean>
   return pinned;
 }
 
+/** False for an element the page has put away: no box, or not displayed. */
+function isLaidOut(el: Element, view: Window): boolean {
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 && r.height === 0) return false;
+  const style = view.getComputedStyle(el);
+  return style.display !== 'none' && style.visibility !== 'hidden';
+}
+
 /** False for something parked far outside the page, a common way to hide a real input. */
 function onScreenish(el: Element, view: Window): boolean {
   const r = el.getBoundingClientRect();
@@ -281,6 +289,10 @@ export class SpatialNavigator {
         if (r.bottom < above || r.top > below) continue;
       }
       if (!isVisible(el, view)) continue;
+      // Too small to aim at or to see a ring on from a couch (a carousel's
+      // row of dots, six to nine pixels high on the live site).
+      const size = el.getBoundingClientRect();
+      if (Math.min(size.width, size.height) < 10) continue;
       seen.add(el);
     }
     // A label tied to a toggle by `for` stands in for it only when the toggle
@@ -373,7 +385,43 @@ export class SpatialNavigator {
     const cache = new Map<Element, boolean>();
     const flowing = onScreen.filter((el) => !isPinned(el, view, cache));
     const pool = flowing.length || !allowPinned ? flowing : onScreen;
-    return this.focus(pool[pickInitial(pool.map(toRect))] ?? null);
+    // Not a small icon when there is anything else. Seen on the live site: a
+    // banner's mute button sits above and to the right of its main button,
+    // and reading order alone put the first press on it.
+    const icon = Math.max(view.innerHeight * 0.12, 48);
+    const main = pool.filter((el) => {
+      const r = el.getBoundingClientRect();
+      // An icon is small and about square; a short text link is not one.
+      return r.width > icon || r.height > icon || r.width >= r.height * 1.5;
+    });
+    const pick = main.length ? main : pool;
+    return this.focus(pick[pickInitial(pick.map(toRect))] ?? null);
+  }
+
+  /**
+   * Focuses what a page is about: its first control in reading order that is
+   * not in a pinned bar and not a small icon, on screen if there is one,
+   * otherwise the first below. Seen on the live site: at the TV scale the
+   * banner's buttons start just below the screen and only its mute icon is
+   * on it.
+   */
+  private focusFirstContent(all: readonly Element[]): boolean {
+    const view = this.doc.defaultView;
+    if (!view) return false;
+    const cache = new Map<Element, boolean>();
+    const icon = Math.max(view.innerHeight * 0.12, 48);
+    const main = all.filter((el) => {
+      if (isPinned(el, view, cache)) return false;
+      const r = el.getBoundingClientRect();
+      return r.top >= 0 && (r.width > icon || r.height > icon || r.width >= r.height * 1.5);
+    });
+    const onScreen = main.filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.bottom <= view.innerHeight && r.left >= 0 && r.right <= view.innerWidth;
+    });
+    const pick = onScreen.length ? onScreen : main;
+    if (pick.length) return this.focus(pick[pickInitial(pick.map(toRect))] ?? null);
+    return this.focusFirstOnScreen(false);
   }
 
   /** Focuses the first candidate inside `container`, reading order. */
@@ -395,8 +443,13 @@ export class SpatialNavigator {
 
   /** One attempt at a move among `all`. Null when nothing lies in that direction. */
   private step(dir: Direction, all: Element[]): boolean | null {
-    const from = this.focused;
     const view = this.doc.defaultView;
+    // What had focus may have been put away without being removed (an entry
+    // of a menu that has closed). It is then nowhere, and moving "from" it
+    // lands somewhere arbitrary; carry on as if nothing had focus.
+    const held = this.focused;
+    if (held && view && !isLaidOut(held, view)) this.clear();
+    const from = this.focused;
     if (!from) {
       // Focus was lost part-way down a page (what had it was replaced as
       // more of the page loaded): carry on from what is on screen, not from the top.
@@ -411,7 +464,7 @@ export class SpatialNavigator {
       // Nothing has focus yet on this page. The first press goes to what the
       // page is about (its main button, its first card), not to the bar
       // pinned across the top; Up, which points at the bar, still gets it.
-      if (dir !== 'up' && this.focusFirstOnScreen(false)) return true;
+      if (dir !== 'up' && this.focusFirstContent(all)) return true;
       const i = pickInitial(all.map(toRect));
       return this.focus(all[i] ?? null);
     }

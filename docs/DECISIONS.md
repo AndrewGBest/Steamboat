@@ -173,3 +173,18 @@ the title page.
   unless the press is Up.
 - **A menu that opens from a player control takes focus**, and a list that
   scrolls by itself is scrolled to its focused entry.
+
+## 2026-11-17: Third-round navigation rules, each from the live site
+
+- **Back in the player closes an open menu first** (the site's Escape), and
+  only then leaves a player that is a page of its own.
+- **Left and Right on the progress bar are sent as the seek keys** instead of
+  looking for a neighbour; the site's bar answers with its own small steps.
+- **The first press goes to the page's main control even when it starts just
+  below the screen**, and never to a small square icon when there is anything
+  else (the home banner's mute button was first in reading order).
+- **Controls under ten pixels in either dimension are not targets** (the
+  banner's dots).
+- **Focus on a control that has been put away counts as no focus.**
+**Reopen if:** a site has a real control that small, or a page whose main
+control is an icon.

@@ -2,6 +2,49 @@
 
 Update this at the end of every working session. Newest first.
 
+## 2026-11-17, third round: seeking, menus, more pages
+
+Andrew asked for the remaining items. All checks below are on Electron 42
+under `--automation`, with a step-by-step tool that reads state after each key.
+
+| Claim | Evidence |
+|---|---|
+| Left and Right on the picture seek ten seconds | the progress bar's position right after each key: 142, 155, 167, then 158 after Left; the site's own skip buttons gave the same steps (136, 148, then 142) |
+| Left and Right on the focused progress bar move it in small steps | position 20, 22, 23 over three presses. That is how the site's bar answers the keys |
+| Back with the settings menu open | first Back leaves the controls (menu still open), second closes the menu, third leaves the player for the title page |
+| The audio menu opens and its options take focus | walk tool; **no option was chosen** |
+| The profile menu opens, walks and closes | Enter opened it (expanded), Down went through four profiles and the options, Back closed it. **No profile was switched** and nothing in it was pressed |
+| Movies, Series and Originals pages | six rows down, along a row, and back up to the bar on each |
+| Home: the first Down lands on the banner's main button; the banner's dots are no longer targets | walk tool, after the change |
+| Packages build on Electron 42 | "Build packages" run 44128461580 green on GitHub. Not downloaded or launched |
+| Tests | 208 unit tests, rule check, end-to-end all ok |
+
+A correction to the round before: the video element's clock **is** steady
+during playback; it is re-based to about 20 seconds at every seek, which is
+why it could not show a seek's size. The progress bar's reported position is
+the reverse: right after a seek it is correct, between seeks it goes stale.
+
+### Still not verified
+
+- Andrew's view of picture and sound. Picture above 854x480.
+- Skip intro (seen, reachable, not pressed), next episode, the end of an
+  episode, the advertising tier, live streams.
+- The Watchlist page with something in it (it showed one tab and the footer).
+- Switching profile, a profile PIN, the rest of sign-in by remote.
+- A packaged build actually running; the purchase guard's wording.
+
+### Found, not fixed
+
+- One of the settings menu's three entries opens a slider view with no menu
+  entries; with it open, the second Back leaves the player instead of closing
+  the view first.
+- On a title page reached from the player, one Back does nothing before the
+  next goes home (the site seems to keep two history entries).
+- After the banner turns at its edge, focus can sit for one press on a
+  control that has collapsed; the next press recovers.
+- Up from the first row passes a small tile button and the banner's watchlist
+  button before the bar.
+
 ## 2026-11-17, later: signed in, playback proven, player usable from the remote
 
 Andrew signed in by hand and played a title. The agent then drove the signed-in
@@ -40,10 +83,7 @@ app under `--automation`. Reasons for each change are in `DECISIONS.md`.
 
 ### NOT verified
 
-- **Seeking.** Left and Right were pressed in the player on 44; the video
-  element's clock is not the programme's (it jumped from 52 to 23), so nothing
-  could be read from it. Whether the site's player seeks on those keys is
-  unknown. Left and Right on the focused progress bar do nothing.
+- (Seeking: settled in the third round, above.)
 - What Andrew saw and heard in his run. The report shows two play pages with
   audio errors (that was Electron 44) and a third that played.
 - Picture above 854x480; the advertising tier; live or scheduled streams.

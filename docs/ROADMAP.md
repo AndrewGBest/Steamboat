@@ -29,8 +29,8 @@ they have been checked on this service.
 ## Phase 2: player
 
 - [x] Play and pause by key press
-- [ ] Seek by key press
-- [x] The site's player controls revealed and walked; subtitles list (audio not opened)
+- [x] Seek by key press
+- [x] The site's player controls revealed and walked; subtitles and audio lists (nothing chosen)
 - [ ] Skip intro, skip recap and next-episode prompts
 - [x] Back from the player
 - [ ] Live or scheduled streams, if the account has any

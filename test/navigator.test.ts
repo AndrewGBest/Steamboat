@@ -401,6 +401,25 @@ describe('pinned bars', () => {
   });
 });
 
+describe('focus on something that has been put away', () => {
+  it('is treated as no focus: the next press starts from the page', () => {
+    Object.defineProperty(window, 'innerWidth', { value: 960, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 540, configurable: true });
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    document.body.innerHTML = `
+      <div style="position: fixed">${card('profile', 10, 0)}</div>
+      <div id="menu">${card('entry', 10, 60)}</div>
+      ${card('first', 40, 240)}
+      ${card('far', 800, 240)}`;
+    const nav = new SpatialNavigator(document);
+    nav.focus(document.getElementById('entry'));
+    // The menu closes: its entry stays in the document with no box.
+    document.getElementById('entry')!.setAttribute('data-rect', '0,0,0,0');
+    nav.move('down');
+    expect(nav.focused?.id).toBe('first');
+  });
+});
+
 describe('the first press on a page', () => {
   beforeEach(() => {
     Object.defineProperty(window, 'innerWidth', { value: 960, configurable: true });
@@ -416,6 +435,29 @@ describe('the first press on a page', () => {
     const nav = new SpatialNavigator(document);
     nav.move('down');
     expect(nav.focused?.id).toBe('play');
+  });
+
+  it('prefers the main button to a small icon above it', () => {
+    document.getElementById('play')!.insertAdjacentHTML('beforebegin', '<button id="mute" data-rect="850,135,56,56">x</button>');
+    const nav = new SpatialNavigator(document);
+    nav.move('down');
+    expect(nav.focused?.id).toBe('play');
+  });
+
+  it('takes the main button just below the screen over an icon on it', () => {
+    document.getElementById('later')!.remove();
+    document.getElementById('play')!.setAttribute('data-rect', '50,554,113,52');
+    document.body.insertAdjacentHTML('beforeend', '<button id="mute" data-rect="850,135,56,56">x</button>');
+    const nav = new SpatialNavigator(document);
+    nav.move('down');
+    expect(nav.focused?.id).toBe('play');
+  });
+
+  it('never offers a dot too small to aim at', () => {
+    document.body.insertAdjacentHTML('beforeend', '<button id="dot" data-rect="500,300,6,6">x</button><button id="dash" data-rect="520,300,28,9">x</button>');
+    const ids = new SpatialNavigator(document).candidates().map((el) => el.id);
+    expect(ids).not.toContain('dot');
+    expect(ids).not.toContain('dash');
   });
 
   it('goes to the bar when the press is Up', () => {
