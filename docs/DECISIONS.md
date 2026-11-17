@@ -188,3 +188,17 @@ the title page.
 - **Focus on a control that has been put away counts as no focus.**
 **Reopen if:** a site has a real control that small, or a page whose main
 control is an icon.
+
+## 2026-11-17: Under automation nothing in the profile menu can be pressed
+
+**Decision:** adapter revision 3 lists the profile menu's entries as guarded
+controls (`profile-menu.txt` is the outline). A scripted run can open and
+walk the menu and cannot switch profile, add or edit one, open account or
+app settings, or log out.
+**Reason:** the site is one page that changes its address without loading, so
+the guard's check on addresses never sees a move to the account pages; only
+the check on the control pressed does. Account and profile changes are
+Andrew's alone (`VM-SETUP.md`).
+**Checked:** on the live site, Enter on the menu's Help entry under
+`--automation` left the page and the menu as they were.
+**Cost:** an agent cannot test profile switching. A person is not affected.

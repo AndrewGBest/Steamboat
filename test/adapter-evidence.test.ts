@@ -6,6 +6,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseAdapter } from '../src/layer/adapter/adapter';
+import { isSpendControl } from '../src/layer/guard/purchase-guard';
 
 const DIR = join(__dirname, 'fixtures/outlines');
 const adapter = parseAdapter(JSON.parse(readFileSync(join(__dirname, '../adapters/disneyplus.json'), 'utf8')));
@@ -76,6 +77,20 @@ describe('the adapter is backed by outlines', () => {
     expect(openers).toHaveLength(1);
     expect(openers[0]!.tagName).toBe('A');
     expect(openers[0]!.querySelector('[data-testid="icon-search"]')).not.toBeNull();
+  });
+
+  it('profile menu: every entry is guarded under automation, and the button that opens it is not', () => {
+    const dom = fromOutline('profile-menu.txt');
+    document.body.replaceChildren(dom);
+    const guarded = adapter.selectors.purchaseControls;
+    const entries = dom.querySelectorAll('[role="menuitem"]');
+    expect(entries).toHaveLength(5);
+    for (const entry of entries) {
+      // By the selector alone: the fixture's text is filler of the right length.
+      expect(isSpendControl(entry.querySelector('p')!, [])).toBe(false);
+      expect(isSpendControl(entry.querySelector('p')!, guarded)).toBe(true);
+    }
+    expect(isSpendControl(dom.querySelector('#active-profile')!, guarded)).toBe(false);
   });
 
   it('row arrows: the banner and a card row each have one previous and one next button beside their strip', () => {

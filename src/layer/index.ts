@@ -311,6 +311,8 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   let coverTimer: number | undefined;
   let lastCloseAt = 0;
   let backStreak = 0;
+  /** A menu was seen to open in the player and no Escape has been sent for it yet. */
+  let playerMenuSeen = false;
   /** The address the user was last browsing at, outside the player. */
   let browseUrl: string | null = null;
   const back = (): void => {
@@ -353,7 +355,11 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
       }
       // A player that is a page of its own is left like any page, once any
       // menu it has open is closed with the site's own Escape key.
-      const menuOpen = nav.candidates().some((el) => el.matches(MENU_ENTRY));
+      // A menu's entry can open a view with no entries of its own (a slider,
+      // on the live site), so having seen the menu open counts until one
+      // Escape has been sent for it.
+      const menuOpen = playerMenuSeen || nav.candidates().some((el) => el.matches(MENU_ENTRY));
+      playerMenuSeen = false;
       if (!menuOpen && playerIsOwnPage(browseUrl, view.location.href) && view.history.length > 1) {
         view.history.back();
         return;
@@ -409,7 +415,10 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   };
 
   const dispatch = (a: Action): void => {
-    if (!inPlayer()) browseUrl = view.location.href;
+    if (!inPlayer()) {
+      browseUrl = view.location.href;
+      playerMenuSeen = false;
+    }
     doc.documentElement.classList.add('steamboat-no-pointer');
     // A pending "pick focus up again" belongs to the previous key; a new key
     // overrides it (Back right after Enter must not have focus put back).
@@ -499,6 +508,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
             const point = { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 };
             // A menu opened: go into it, rather than leave the user to find it.
             const opened = nav.candidates().filter((el) => !before.has(el) && el.matches(MENU_ENTRY));
+            if (opened.length > 0) playerMenuSeen = true;
             if (opened.length > 0 && nav.focused === target) nav.focusNearest(point, opened);
             else if (!onPlayerControl()) nav.focusNearest(point);
           }, 500);

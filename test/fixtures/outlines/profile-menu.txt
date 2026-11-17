@@ -1,0 +1,25 @@
+# Top bar with the profile menu open, signed in. Captured with Ctrl+Shift+D on 2026-11-17.
+# Trimmed to the menu; hashed class names removed. The sanitiser masked the
+# profile names and four of the option test ids, as it should.
+div[data-testid="account-:text"]
+  button#active-profile[type="button"][tabindex="0"][data-testid="dropdown-active-profile"][aria-label:90][aria-expanded="true"][aria-haspopup="true"]
+    img[src:155][alt:6]
+    p{text:6}
+  div[data-testid="nav-dropdown-divider"]
+  ul#nav-dropdown[role="menu"][aria-labelledby:14]
+    li[role="none"]
+      button[type="button"][role="menuitem"][data-testid="dropdown-profile-:text"][aria-label:4][tabindex="-1"]
+        img[src:155][alt:4]
+        p{text:4}
+    li[role="none"]
+      button[type="button"][role="menuitem"][data-testid=":id"][aria-label:11][tabindex="-1"]
+        p{text:11}
+    li[role="none"]
+      button[type="button"][role="menuitem"][data-testid=":id"][aria-label:7][tabindex="-1"]
+        p{text:7}
+    li[role="none"]
+      button[type="button"][role="menuitem"][data-testid="dropdown-option-5-help"][aria-label:4][tabindex="-1"]
+        p{text:4}
+    li[role="none"]
+      button[type="button"][role="menuitem"][data-testid="dropdown-option-6-logout"][aria-label:7][tabindex="-1"]
+        p{text:7}
