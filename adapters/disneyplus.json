@@ -1,0 +1,17 @@
+{
+  "id": "disneyplus",
+  "schema": 1,
+  "revision": 0,
+  "verified": false,
+  "note": "Empty on purpose. No selector may be added without a diagnostics outline from the live site that shows it (Hard rule 7); evidence goes in test/fixtures/outlines/ and is checked by test/adapter-evidence.test.ts. Until then the generic heuristics run.",
+  "selectors": {
+    "extraFocusable": [],
+    "searchInput": [],
+    "searchOpen": [],
+    "rowPrev": [],
+    "rowNext": [],
+    "playerRoot": [],
+    "playerClose": [],
+    "purchaseControls": []
+  }
+}

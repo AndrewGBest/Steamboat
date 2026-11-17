@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Steamboat icon. Original artwork for this project: a side-wheel river
+       boat at dusk whose paddle wheel carries a play mark. No characters, and
+       not derived from any service's or studio's branding. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a2a1e"/>
+      <stop offset="0.55" stop-color="#b5562f"/>
+      <stop offset="1" stop-color="#f0c27a"/>
+    </linearGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+    <!-- steam -->
+    <circle cx="214" cy="92" r="26" fill="#f6ead2" opacity="0.9"/>
+    <circle cx="258" cy="66" r="34" fill="#f6ead2" opacity="0.8"/>
+    <circle cx="316" cy="58" r="26" fill="#f6ead2" opacity="0.65"/>
+    <!-- funnels -->
+    <rect x="150" y="128" width="34" height="112" fill="#2a1b14"/>
+    <rect x="144" y="120" width="46" height="16" rx="4" fill="#d9a441"/>
+    <rect x="208" y="150" width="30" height="90" fill="#2a1b14"/>
+    <rect x="202" y="142" width="42" height="14" rx="4" fill="#d9a441"/>
+    <!-- cabins -->
+    <rect x="112" y="238" width="250" height="52" rx="8" fill="#f6ead2"/>
+    <rect x="84" y="288" width="330" height="56" rx="8" fill="#fff7e6"/>
+    <g fill="#7a3b22">
+      <rect x="134" y="252" width="26" height="24" rx="4"/>
+      <rect x="176" y="252" width="26" height="24" rx="4"/>
+      <rect x="218" y="252" width="26" height="24" rx="4"/>
+      <rect x="110" y="304" width="26" height="26" rx="4"/>
+      <rect x="152" y="304" width="26" height="26" rx="4"/>
+      <rect x="194" y="304" width="26" height="26" rx="4"/>
+    </g>
+    <!-- hull -->
+    <path d="M52 344 H452 L418 410 H98 Z" fill="#2a1b14"/>
+    <!-- water -->
+    <rect y="404" width="512" height="108" fill="#16323d"/>
+    <path d="M0 430 q32 -16 64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0" stroke="#5fa3b0" stroke-width="8" fill="none" opacity="0.7"/>
+    <!-- paddle wheel with a play mark -->
+    <circle cx="352" cy="340" r="92" fill="#8f2f1f" stroke="#d9a441" stroke-width="12"/>
+    <path d="M326 292 C326 280 339 274 349 281 L404 328 C412 334 412 346 404 352 L349 399 C339 406 326 400 326 388 Z" fill="#fff7e6"/>
+  </g>
+</svg>

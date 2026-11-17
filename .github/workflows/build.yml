@@ -1,0 +1,43 @@
+# Builds the Linux packages on request and keeps them as a workflow artifact,
+# so a build can be tried without publishing a release. Start it from the
+# Actions tab ("Run workflow") or with `gh workflow run build.yml`.
+name: Build packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: xvfb-run -a npm run e2e
+      - run: npx electron-builder --linux --publish never
+      # The Flatpak bundle is built separately: it needs flatpak-builder and
+      # the runtime it is built against, which the other packages do not.
+      - name: Install Flatpak tooling and runtimes
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder elfutils
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
+      - name: Build the Flatpak bundle
+        run: npx electron-builder --linux flatpak --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: steamboat-linux-x64
+          path: |
+            release/*.AppImage
+            release/*.tar.gz
+            release/*.flatpak
+          if-no-files-found: error
+          retention-days: 14
