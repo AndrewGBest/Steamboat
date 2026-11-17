@@ -1,0 +1,36 @@
+# Home page, signed in, at the 960x540 TV canvas. Captured with Ctrl+Shift+D on 2026-11-17.
+# Trimmed to the top banner and the first row of cards. Hashed class names and
+# wrappers that carry no attributes were removed; nothing was added.
+div[data-testid="set"]
+  section[data-testid="set-section"]
+    div[role="region"]
+      div[data-testid="hero-immersive-shelf"]
+        div[aria-hidden="true"][role="group"]
+          div[aria-label:196][data-testid="hero-immersive-set-item"]
+            a[aria-label:33][data-testid="browse-action-button"][href:51]
+              span{text:7}
+            button[aria-label:97][data-testid="add-to-watchlist-button"]
+              svg[aria-hidden="true"][role="img"][data-testid="icon-plus"]
+      button[aria-label:10][data-testid="arrow-left"]
+        svg[aria-hidden="true"][role="img"]
+      button[aria-label:11][data-testid="arrow-right"]
+        svg[aria-hidden="true"][role="img"]
+      div[data-testid="hero-immersive-dots"]
+        button[title:14][tabindex="0"][aria-label:14][data-testid="hero-immersive-dot"]
+        button[title:14][tabindex="0"][aria-label:14][data-testid="hero-immersive-dot"]
+div[data-testid="set"]
+  div
+    h4{text:19}
+  section[data-testid="set-section"]
+    div
+      button[aria-label:10][data-testid="arrow-left"][aria-disabled="true"][tabindex="-1"]
+        svg[aria-hidden="true"][role="img"]
+      div[data-testid="set-shelf"]
+        div[data-testid="set-shelf-item"][role="group"][aria-hidden="false"]
+          a[data-testid="set-item"][aria-label:113][aria-disabled="false"][tabindex="0"][href:51]
+        div[data-testid="set-shelf-item"][role="group"][aria-hidden="false"]
+          a[data-testid="set-item"][aria-label:89][aria-disabled="false"][tabindex="0"][href:51]
+        div[data-testid="set-shelf-item"][role="group"][aria-hidden="false"]
+          a[data-testid="set-item"][aria-label:85][aria-disabled="false"][tabindex="-1"][href:51]
+      button[aria-label:11][data-testid="arrow-right"][aria-disabled="false"]
+        svg[aria-hidden="true"][role="img"]

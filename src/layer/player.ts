@@ -84,3 +84,21 @@ export function playerScope(video: HTMLVideoElement, playerRoots: readonly strin
   }
   return scope;
 }
+
+/**
+ * True when the site's player is a page of its own: the address now is not
+ * the address the user was browsing at when they started it. Such a player is
+ * left the way any page is, by going back. (Seen on the live site: the player
+ * lives at its own path and ignores Escape.) A player laid over the page it
+ * was started from has the same address and is closed with the site's key.
+ */
+export function playerIsOwnPage(browseUrl: string | null, currentUrl: string): boolean {
+  if (!browseUrl) return false;
+  try {
+    const a = new URL(browseUrl);
+    const b = new URL(currentUrl);
+    return a.origin !== b.origin || a.pathname !== b.pathname;
+  } catch {
+    return false;
+  }
+}

@@ -9,8 +9,9 @@ import { startPolling } from './input/gamepad';
 import { keyToAction, type Mode } from './input/keys';
 import { aboutTitle, HELP, NOTICE } from '../shared/about';
 import { isSecretField, oskDock, OskModel } from '../shared/osk';
+import { deepActiveElement, deepContains } from './spatial/deep';
 import { InjectedKeys, isNativePlayerKey, playerKeyFor, playerKeyInfo, type PlayerKey } from '../shared/player-keys';
-import { findMainVideo, isPlayerActive, playerScope } from './player';
+import { findMainVideo, isPlayerActive, playerIsOwnPage, playerScope } from './player';
 import { coveredByScreen, edgeControl, isVisible, openDialog, SpatialNavigator } from './spatial/navigator';
 import { HOST_TAG, Overlay } from './ui/overlay';
 import { installSpikeProbes } from './spike';
@@ -41,6 +42,9 @@ export interface Layer {
   away: () => void;
   stop: () => void;
 }
+
+/** What a menu's entries are, when one opens from a player control. */
+const MENU_ENTRY = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="option"], [role="radio"]';
 
 export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   const view = doc.defaultView;
@@ -158,7 +162,8 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
     // Outside the player this must answer without touching focus: it is also
     // asked by timers, and clearing here would drop focus on a browse page.
     if (!f || !inPlayer()) return false;
-    if (scope()?.contains(f) && isVisible(f, view)) return true;
+    const within = scope();
+    if (within && deepContains(within, f) && isVisible(f, view)) return true;
     nav.clear();
     return false;
   };
@@ -214,10 +219,10 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   const mode = (): Mode => {
     if (oskOpen) {
       // The keyboard only makes sense while its field still has focus.
-      if (isTextEntry(doc.activeElement)) return 'browse';
+      if (isTextEntry(deepActiveElement(doc))) return 'browse';
       closeOsk();
     }
-    if (isTextEntry(doc.activeElement)) return 'text';
+    if (isTextEntry(deepActiveElement(doc))) return 'text';
     if (!inPlayer()) return 'browse';
     return onPlayerControl() ? 'browse' : 'player';
   };
@@ -243,7 +248,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
     const dialog = openDialog(doc);
     if (!dialog) return false;
     const f = nav.focused;
-    if (!f || !dialog.contains(f)) {
+    if (!f || !deepContains(dialog, f)) {
       beforeDialog = f;
       nav.focusFirstIn(dialog);
     }
@@ -298,8 +303,10 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   let coverTimer: number | undefined;
   let lastCloseAt = 0;
   let backStreak = 0;
+  /** The address the user was last browsing at, outside the player. */
+  let browseUrl: string | null = null;
   const back = (): void => {
-    const active = doc.activeElement;
+    const active = deepActiveElement(doc);
     if (isTextEntry(active)) {
       (active as HTMLElement).blur();
       return;
@@ -334,6 +341,11 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
       const close = firstMatch(doc, adapter.selectors.playerClose);
       if (close) {
         (close as HTMLElement).click();
+        return;
+      }
+      // A player that is a page of its own is left like any page.
+      if (playerIsOwnPage(browseUrl, view.location.href) && view.history.length > 1) {
+        view.history.back();
         return;
       }
       // Ask the site's player with its own Escape key. With a menu open the
@@ -387,6 +399,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   };
 
   const dispatch = (a: Action): void => {
+    if (!inPlayer()) browseUrl = view.location.href;
     doc.documentElement.classList.add('steamboat-no-pointer');
     // A pending "pick focus up again" belongs to the previous key; a new key
     // overrides it (Back right after Enter must not have focus put back).
@@ -469,9 +482,15 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
         // Activating a player control can replace it (a menu opens, a list
         // changes). Pick focus up again next to where it was.
         if (box && inPlayer()) {
+          const before = new Set(nav.candidates());
           view.clearTimeout(refocusTimer);
           refocusTimer = view.setTimeout(() => {
-            if (inPlayer() && !onPlayerControl()) nav.focusNearest({ x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 });
+            if (!inPlayer()) return;
+            const point = { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 };
+            // A menu opened: go into it, rather than leave the user to find it.
+            const opened = nav.candidates().filter((el) => !before.has(el) && el.matches(MENU_ENTRY));
+            if (opened.length > 0 && nav.focused === target) nav.focusNearest(point, opened);
+            else if (!onPlayerControl()) nav.focusNearest(point);
           }, 500);
         }
         break;
@@ -537,7 +556,7 @@ export function startLayer({ doc, options, adapter, send }: LayerDeps): Layer {
   };
   const onFocusIn = (e: FocusEvent): void => adoptField(e.target instanceof Element ? e.target : null);
   doc.addEventListener('focusin', onFocusIn, true);
-  adoptField(doc.activeElement);
+  adoptField(deepActiveElement(doc));
 
   const onPointer = (): void => {
     // The shell's own nudge (see revealControls) is not the user reaching for a mouse.

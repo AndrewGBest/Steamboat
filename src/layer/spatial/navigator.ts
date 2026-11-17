@@ -1,5 +1,6 @@
 // DOM side of directional focus: finds candidates, moves focus, activates.
 import type { Direction } from '../../shared/actions';
+import { composedParent, deepClosest, deepContains, deepQueryAll } from './deep';
 import { pickInitial, pickNext, type Rect } from './geometry';
 
 const FOCUSABLE = [
@@ -84,12 +85,12 @@ export function isVisible(el: Element, view: Window): boolean {
     const hitArea = el.matches('a[href], button, [role="button"], [role="link"]');
     if (!hitArea || r.width < 48 || r.height < 48) return false;
   }
-  if (el.closest('[aria-hidden="true"], [inert]')) return false;
+  if (deepClosest(el, '[aria-hidden="true"], [inert]')) return false;
   // Opacity is not inherited in the computed style, but a transparent ancestor
   // hides everything in it. Seen on the live site: the slides of a carousel
   // are stacked in one place and all but one sit in a fully transparent wrapper.
-  let node = el.parentElement;
-  for (let i = 0; node && i < 12; i++, node = node.parentElement) {
+  let node = composedParent(el);
+  for (let i = 0; node && i < 12; i++, node = composedParent(node)) {
     if (view.getComputedStyle(node).opacity === '0') return false;
   }
   return true;
@@ -127,8 +128,8 @@ export function edgeControl(from: Element, selectors: readonly string[], view: W
 }
 
 export function rowOf(el: Element, view: Window): Element | null {
-  let node = el.parentElement;
-  for (let i = 0; node && i < 8; i++, node = node.parentElement) {
+  let node = composedParent(el);
+  for (let i = 0; node && i < 8; i++, node = composedParent(node)) {
     // A strip, not a page: on the live site a page-sized container also
     // clips sideways, and taking it for a row sent focus to the top of the page.
     if (node.clientHeight > view.innerHeight * 0.9) return null;
@@ -163,7 +164,7 @@ export function openDialog(doc: Document): Element | null {
 export function isPinned(el: Element, view: Window, cache: Map<Element, boolean> = new Map()): boolean {
   const path: Element[] = [];
   let pinned = false;
-  for (let node: Element | null = el; node && node !== el.ownerDocument.body; node = node.parentElement) {
+  for (let node: Element | null = el; node && node !== el.ownerDocument.body; node = composedParent(node)) {
     const known = cache.get(node);
     if (known !== undefined) {
       pinned = known;
@@ -206,12 +207,32 @@ function toRect(el: Element): Rect {
 export function coveredByScreen(el: Element, view: Window): boolean {
   const r = el.getBoundingClientRect();
   const top = el.ownerDocument.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
-  if (!top || el.contains(top)) return false;
-  for (let c: Element | null = top; c && !c.contains(el); c = c.parentElement) {
+  // For a control inside a shadow root the browser names its outermost host.
+  if (!top || deepContains(el, top) || deepContains(top, el)) return false;
+  for (let c: Element | null = top; c && !deepContains(c, el); c = composedParent(c)) {
     const b = c.getBoundingClientRect();
     if (b.width >= view.innerWidth * 0.9 && b.height >= view.innerHeight * 0.9) return true;
   }
   return false;
+}
+
+/**
+ * Brings `el` into view inside the nearest list that scrolls by itself, when
+ * that list has it out of sight. Only that list moves. Seen on the live site:
+ * the player's subtitle menu is a list taller than its box, and entries past
+ * the box could be focused but not seen.
+ */
+export function scrollWithinList(el: Element, view: Window): void {
+  const body = el.ownerDocument.body;
+  for (let node = composedParent(el), i = 0; node && node !== body && node !== el.ownerDocument.documentElement && i < 12; node = composedParent(node), i++) {
+    if (node.scrollHeight <= node.clientHeight + 8) continue;
+    const overflow = view.getComputedStyle(node).overflowY;
+    if (overflow !== 'auto' && overflow !== 'scroll') continue;
+    const box = node.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    if (r.top < box.top || r.bottom > box.bottom) node.scrollTop += (r.top + r.bottom) / 2 - (box.top + box.bottom) / 2;
+    return;
+  }
 }
 
 const FOOTER = 'footer, [role="contentinfo"]';
@@ -252,8 +273,8 @@ export class SpatialNavigator {
     const scope = this.opts.scope?.() ?? null;
     const skip = this.skipSelector();
     const seen = new Set<Element>();
-    for (const el of (scope ?? this.doc).querySelectorAll(selector)) {
-      if (this.opts.ignoreWithin && el.closest(this.opts.ignoreWithin)) continue;
+    for (const el of deepQueryAll(scope ?? this.doc, selector)) {
+      if (this.opts.ignoreWithin && deepClosest(el, this.opts.ignoreWithin)) continue;
       if (skip && el.matches(skip)) continue;
       if (near) {
         const r = el.getBoundingClientRect();
@@ -285,7 +306,7 @@ export class SpatialNavigator {
     }
     // Drop wrappers that contain another candidate, so a card and the link
     // inside it do not both receive focus.
-    const inner = [...seen].filter((el) => ![...seen].some((other) => other !== el && el.contains(other)));
+    const inner = [...seen].filter((el) => ![...seen].some((other) => other !== el && deepContains(el, other)));
     // Drop backdrops too: a link stretched over a whole banner, with the
     // banner's real buttons lying on top of it. Seen on the live site, where
     // such a link swallowed sideways movement.
@@ -357,7 +378,7 @@ export class SpatialNavigator {
 
   /** Focuses the first candidate inside `container`, reading order. */
   focusFirstIn(container: Element): boolean {
-    const inside = this.candidates().filter((el) => container.contains(el));
+    const inside = this.candidates().filter((el) => deepContains(container, el));
     return this.focus(inside[pickInitial(inside.map(toRect))] ?? null);
   }
 
@@ -387,6 +408,10 @@ export class SpatialNavigator {
         }
         return true;
       }
+      // Nothing has focus yet on this page. The first press goes to what the
+      // page is about (its main button, its first card), not to the bar
+      // pinned across the top; Up, which points at the bar, still gets it.
+      if (dir !== 'up' && this.focusFirstOnScreen(false)) return true;
       const i = pickInitial(all.map(toRect));
       return this.focus(all[i] ?? null);
     }
@@ -400,6 +425,17 @@ export class SpatialNavigator {
       if (!isPinned(from, view, cache)) {
         const flowing = others.filter((el) => !isPinned(el, view, cache));
         if (pickNext(toRect(from), flowing.map(toRect), dir) !== -1) others = flowing;
+      }
+    }
+    // Left and right stay in the page too. A pinned strip of tabs lies across
+    // whatever row has scrolled under it, and would be "in the row". From a
+    // sideways-scrolling row it is never a target (the row's own edge handling
+    // takes over); elsewhere only when no page content lies that way.
+    if (view && (dir === 'left' || dir === 'right')) {
+      const cache = new Map<Element, boolean>();
+      if (!isPinned(from, view, cache)) {
+        const flowing = others.filter((el) => !isPinned(el, view, cache));
+        if (rowOf(from, view) || pickNext(toRect(from), flowing.map(toRect), dir) !== -1) others = flowing;
       }
     }
     const i = pickNext(toRect(from), others.map(toRect), dir);
@@ -435,7 +471,7 @@ export class SpatialNavigator {
     if (!view) return target;
     const row = rowOf(target, view);
     if (!row || row === rowOf(from, view)) return target;
-    const inRow = candidates.filter((el) => row.contains(el));
+    const inRow = candidates.filter((el) => deepContains(row, el));
     const remembered = this.rowMemory.get(row);
     if (remembered && inRow.includes(remembered)) return remembered;
     const rowLeft = row.getBoundingClientRect().left;
@@ -488,6 +524,7 @@ export class SpatialNavigator {
     if (view && bottom <= view.innerHeight) {
       // Only this: a second scroll request would replace it and stop short of the top.
       view.scrollTo({ top: 0, behavior: this.rapid ? 'instant' : 'smooth' });
+      scrollWithinList(el, view);
     } else {
       // With a key held, a smooth scroll is restarted by every repeat and never arrives.
       el.scrollIntoView({ block: 'center', inline: 'center', behavior: this.rapid ? 'instant' : 'smooth' });

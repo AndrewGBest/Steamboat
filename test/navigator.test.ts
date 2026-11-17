@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { coveredByScreen, edgeControl, FOCUS_ATTR, openDialog, SpatialNavigator, ZOOM_ATTR } from '../src/layer/spatial/navigator';
+import { coveredByScreen, edgeControl, FOCUS_ATTR, openDialog, scrollWithinList, SpatialNavigator, ZOOM_ATTR } from '../src/layer/spatial/navigator';
 
 // jsdom has no layout engine, so each element's rectangle is read from data-rect="left,top,width,height".
 function installLayout(): void {
@@ -401,6 +401,82 @@ describe('pinned bars', () => {
   });
 });
 
+describe('the first press on a page', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 960, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 540, configurable: true });
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    document.body.innerHTML = `
+      <div style="position: fixed">${card('profile', 10, 0)}${card('home', 200, 0)}</div>
+      ${card('play', 50, 400)}
+      ${card('later', 200, 400)}`;
+  });
+
+  it('goes to the page content, not the pinned bar', () => {
+    const nav = new SpatialNavigator(document);
+    nav.move('down');
+    expect(nav.focused?.id).toBe('play');
+  });
+
+  it('goes to the bar when the press is Up', () => {
+    const nav = new SpatialNavigator(document);
+    nav.move('up');
+    expect(nav.focused?.id).toBe('profile');
+  });
+
+  it('falls back to the bar when the page has nothing else yet', () => {
+    document.getElementById('play')!.remove();
+    document.getElementById('later')!.remove();
+    const nav = new SpatialNavigator(document);
+    nav.move('down');
+    expect(nav.focused?.id).toBe('profile');
+  });
+});
+
+describe('pinned bars, sideways', () => {
+  // A pinned strip of tabs lies across the row that has scrolled under it
+  // (the home page's section tabs, seen on the live site).
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 960, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 540, configurable: true });
+    document.body.innerHTML = `
+      <div style="position: sticky">${card('tab', 330, 90)}</div>
+      <div id="strip">${card('c1', 40, 100)}${card('c2', 260, 100)}${card('c3', 480, 100)}</div>`;
+  });
+
+  it('moves along the page content, not onto the bar lying across it', () => {
+    const nav = new SpatialNavigator(document);
+    nav.focus(document.getElementById('c2'));
+    nav.move('right');
+    expect(nav.focused?.id).toBe('c3');
+    nav.move('left');
+    nav.move('left');
+    expect(nav.focused?.id).toBe('c1');
+  });
+
+  it('outside a scrolling row, reaches the bar when no page content lies that way', () => {
+    document.getElementById('c3')!.remove();
+    document.getElementById('c1')!.remove();
+    const nav = new SpatialNavigator(document);
+    nav.focus(document.getElementById('c2'));
+    nav.move('right');
+    expect(nav.focused?.id).toBe('tab');
+  });
+
+  it('at the end of a scrolling row, stays put so the row can turn', () => {
+    document.getElementById('c3')!.remove();
+    const strip = document.getElementById('strip')!;
+    strip.style.overflowX = 'auto';
+    Object.defineProperty(strip, 'scrollWidth', { value: 2000, configurable: true });
+    Object.defineProperty(strip, 'clientWidth', { value: 900, configurable: true });
+    Object.defineProperty(strip, 'clientHeight', { value: 60, configurable: true });
+    const nav = new SpatialNavigator(document);
+    nav.focus(document.getElementById('c2'));
+    expect(nav.move('right')).toBe(false);
+    expect(nav.focused?.id).toBe('c2');
+  });
+});
+
 describe('following a jump', () => {
   it('knows when focus is off screen and can pick the first page control on screen', () => {
     Object.defineProperty(window, 'innerWidth', { value: 960, configurable: true });
@@ -517,5 +593,33 @@ describe('coveredByScreen', () => {
   it('is true once something screen-sized is in front, or a part of it', () => {
     expect(coveredByScreen(setup('player'), window)).toBe(true);
     expect(coveredByScreen(setup('spinner'), window)).toBe(true);
+  });
+});
+
+describe('scrollWithinList', () => {
+  const list = (): HTMLElement => {
+    document.body.innerHTML = `<div id="list" style="overflow-y: auto" data-rect="500,200,400,200">${card('shown', 500, 250)}${card('below', 500, 460)}</div>`;
+    const el = document.getElementById('list')!;
+    Object.defineProperty(el, 'scrollHeight', { value: 600, configurable: true });
+    Object.defineProperty(el, 'clientHeight', { value: 200, configurable: true });
+    return el;
+  };
+
+  it('scrolls the list to an entry outside its box', () => {
+    const el = list();
+    scrollWithinList(document.getElementById('below')!, window);
+    // The entry's middle (490) is brought to the box's middle (300).
+    expect(el.scrollTop).toBe(190);
+  });
+
+  it('leaves the list alone when the entry can be seen', () => {
+    const el = list();
+    scrollWithinList(document.getElementById('shown')!, window);
+    expect(el.scrollTop).toBe(0);
+  });
+
+  it('does nothing for a control that is in no scrolling list', () => {
+    document.body.innerHTML = card('plain', 0, 900);
+    expect(() => scrollWithinList(document.getElementById('plain')!, window)).not.toThrow();
   });
 });

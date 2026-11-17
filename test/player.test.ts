@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { findMainVideo, isPlayerActive, playerScope } from '../src/layer/player';
+import { findMainVideo, isPlayerActive, playerScope, playerIsOwnPage } from '../src/layer/player';
 import { SpatialNavigator } from '../src/layer/spatial/navigator';
 import { InjectedKeys, isNativePlayerKey, playerKeyFor, playerKeyInfo } from '../src/shared/player-keys';
 
@@ -134,5 +134,18 @@ describe('player scope', () => {
     expect(nav.focused?.id).toBe('mid');
     nav.move('left');
     expect(nav.focused?.id).toBe('left');
+  });
+});
+
+describe('playerIsOwnPage', () => {
+  it('is true when the player has an address of its own', () => {
+    expect(playerIsOwnPage('https://example.com/browse/title-1', 'https://example.com/play/abc')).toBe(true);
+  });
+  it('is false for a player laid over the page it was started from', () => {
+    expect(playerIsOwnPage('https://example.com/detail/1?x=1', 'https://example.com/detail/1?autoplay=1#t')).toBe(false);
+  });
+  it('is false when nothing was browsed first, or an address cannot be read', () => {
+    expect(playerIsOwnPage(null, 'https://example.com/play/abc')).toBe(false);
+    expect(playerIsOwnPage('nonsense', 'https://example.com/play/abc')).toBe(false);
   });
 });

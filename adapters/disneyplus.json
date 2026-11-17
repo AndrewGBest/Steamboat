@@ -1,15 +1,19 @@
 {
   "id": "disneyplus",
   "schema": 1,
-  "revision": 0,
-  "verified": false,
-  "note": "Empty on purpose. No selector may be added without a diagnostics outline from the live site that shows it (Hard rule 7); evidence goes in test/fixtures/outlines/ and is checked by test/adapter-evidence.test.ts. Until then the generic heuristics run.",
+  "revision": 1,
+  "verified": true,
+  "note": "No selector in this file may be added without a diagnostics outline from the live site that shows it (Hard rule 7). Evidence is in test/fixtures/outlines/ (captured 2026-11-17) and is checked by test/adapter-evidence.test.ts. Everything else is empty: the generic heuristics are in use.",
   "selectors": {
     "extraFocusable": [],
     "searchInput": [],
     "searchOpen": [],
-    "rowPrev": [],
-    "rowNext": [],
+    "rowPrev": [
+      "button[data-testid=\"arrow-left\"]"
+    ],
+    "rowNext": [
+      "button[data-testid=\"arrow-right\"]"
+    ],
     "playerRoot": [],
     "playerClose": [],
     "purchaseControls": []

@@ -70,6 +70,19 @@ describe('the adapter is backed by outlines', () => {
     }
   });
 
-  // Add one test per selector here as the adapter grows, asserting what the
-  // outline shows about it (see the same file in Tropic Video for the pattern).
+  it('row arrows: the banner and a card row each have one previous and one next button beside their strip', () => {
+    const dom = fromOutline('home-rows.txt');
+    const prev = adapter.selectors.rowPrev[0]!;
+    const next = adapter.selectors.rowNext[0]!;
+    const sections = dom.querySelectorAll('[data-testid="set-section"]');
+    expect(sections).toHaveLength(2);
+    for (const section of sections) {
+      expect(section.querySelectorAll(prev)).toHaveLength(1);
+      expect(section.querySelectorAll(next)).toHaveLength(1);
+      // The arrows are siblings of the strip, not inside it, and are not cards.
+      const strip = section.querySelector('[data-testid="set-shelf"], [data-testid="hero-immersive-shelf"]')!;
+      expect(strip.querySelector(`${prev}, ${next}`)).toBeNull();
+      expect(section.querySelector(next)!.parentElement).toBe(strip.parentElement);
+    }
+  });
 });
