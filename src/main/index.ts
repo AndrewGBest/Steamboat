@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { BridgeMessage, LayerOptions, SpikeEvent } from '../shared/actions';
 import { parseConfig, type UserConfig } from '../shared/config';
+import { chooseAdapter } from '../layer/adapter/adapter';
 import { typableText } from '../shared/osk';
 import { playerKeyInfo } from '../shared/player-keys';
 import { browserUserAgent, isAllowedUrl } from './hosts';
@@ -69,13 +70,26 @@ function loadConfig(): UserConfig {
   return config;
 }
 let userConfig: UserConfig = { keys: {} };
+let siteAdapter: unknown = null;
 
+/**
+ * The site adapter: the one in the package, unless the user has put a newer
+ * `adapter.json` for the same site in the data folder (see chooseAdapter).
+ * Nothing is fetched; the file gets there by the user's own hand.
+ */
 function loadAdapter(): unknown {
-  try {
-    return JSON.parse(readFileSync(join(app.getAppPath(), 'adapters', 'disneyplus.json'), 'utf8'));
-  } catch {
-    return null;
-  }
+  const read = (file: string): unknown => {
+    try {
+      return JSON.parse(readFileSync(file, 'utf8'));
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') console.error(`[steamboat] ${file} could not be read: ${String(err).slice(0, 200)}`);
+      return null;
+    }
+  };
+  const choice = chooseAdapter(read(join(app.getAppPath(), 'adapters', 'disneyplus.json')), read(join(app.getPath('userData'), 'adapter.json')));
+  if (choice.note) console.error(`[steamboat] ${choice.note}`);
+  if (choice.source === 'user') console.log('[steamboat] using adapter.json from the data folder');
+  return choice.raw;
 }
 
 function startUrl(): string {
@@ -86,7 +100,7 @@ function startUrl(): string {
 
 function createWindow(ready: Promise<void>): BrowserWindow {
   const boot = encodeURIComponent(
-    JSON.stringify({ options: { ...options, version: app.getVersion(), keys: userConfig.keys, buttons: userConfig.buttons ?? {} }, adapter: loadAdapter() }),
+    JSON.stringify({ options: { ...options, version: app.getVersion(), keys: userConfig.keys, buttons: userConfig.buttons ?? {} }, adapter: siteAdapter }),
   );
   const win = new BrowserWindow({
     width: 1280,
@@ -147,6 +161,8 @@ function createWindow(ready: Promise<void>): BrowserWindow {
     if (!url.startsWith('data:') && url !== 'about:blank') pageShown = true;
   });
 
+  let lastNoticeAt = 0;
+  const NOTICE_GAP_MS = 5000;
   /** Returns true when `url` may load. A refusal is always logged and shown, never silent. */
   const allowed = (url: string): boolean => {
     const reason = blockReason(url, options);
@@ -161,7 +177,9 @@ function createWindow(ready: Promise<void>): BrowserWindow {
     }
     console.error(`[steamboat] blocked navigation (${reason}): ${describeBlockedUrl(url)}`);
     if (pageShown) {
-      wc.send('steamboat:notice', blockedMessage(reason));
+      // Said once, not for every try: a page that keeps asking would keep the message up.
+      if (Date.now() - lastNoticeAt > NOTICE_GAP_MS) wc.send('steamboat:notice', blockedMessage(reason));
+      lastNoticeAt = Date.now();
     } else {
       // Deferred so the refused navigation is fully cancelled first.
       setImmediate(() => {
@@ -346,7 +364,23 @@ async function main(): Promise<void> {
     return;
   }
 
+  // Before the browser starts: its switches cannot be changed afterwards.
+  userConfig = loadConfig();
+  if (userConfig.hardwareDecode) {
+    // Chromium's own switches for decoding video on the graphics chip on
+    // Linux, which it does not promise to support. Off unless asked for.
+    app.commandLine.appendSwitch('enable-features', 'AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL');
+  }
+
   await app.whenReady();
+  // Said once in the terminal, so "is the graphics chip decoding?" has an answer.
+  void app
+    .getGPUInfo('basic')
+    .then(() => {
+      const status = app.getGPUFeatureStatus() as unknown as Record<string, string>;
+      console.log(`[steamboat] video decode: ${status['video_decode'] ?? 'unknown'}${userConfig.hardwareDecode ? ' (hardwareDecode is on)' : ''}`);
+    })
+    .catch(() => undefined);
   app.userAgentFallback = browserUserAgent(app.userAgentFallback);
 
   // Grant only what playback needs; refuse camera, microphone, location, notifications and the rest.
@@ -355,7 +389,7 @@ async function main(): Promise<void> {
     callback(GRANTED.has(permission));
   });
 
-  userConfig = loadConfig();
+  siteAdapter = loadAdapter();
   wireMessages();
 
   // The window opens before the component is ready, never after: on a first

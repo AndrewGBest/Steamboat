@@ -103,6 +103,12 @@ try {
   const focused = () => evaluate('document.querySelector("[data-steamboat-focus]")?.id ?? null');
 
   await sleep(800);
+  // The pinned browser must not claim an audio format it cannot decode here:
+  // the service then sends it and playback fails (DECISIONS.md, the Electron
+  // pin). If this fails after changing the Electron version, do not ship it.
+  if (process.platform === 'linux') {
+    check('the browser does not claim E-AC-3 audio it cannot play', await evaluate(`MediaSource.isTypeSupported('audio/mp4; codecs="ec-3"')`), false);
+  }
   check('layer overlay is present', await evaluate('!!document.querySelector("steamboat-overlay")'), true);
   check('page cannot see any app API', await evaluate('typeof window.require + typeof window.steamboat + typeof window.electron'), 'undefinedundefinedundefined');
 
