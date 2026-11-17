@@ -74,7 +74,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "electron": "github:castlabs/electron-releases#v44.10.1+wvcus",
+    "electron": "github:castlabs/electron-releases#v42.11.18+wvcus",
     "electron-builder": "^26.0.0",
     "esbuild": "^0.25.0",
     "jsdom": "^26.0.0",
