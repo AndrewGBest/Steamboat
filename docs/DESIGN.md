@@ -48,8 +48,9 @@ standard path untouched, and the app says honestly what it is.
 
 ## 4. What is not known yet
 
-- **Whether the service plays video in this shell on Linux.** This is Phase 0
-  and decides everything. The service refused Linux outright at its 2019
+- **(Answered 2026-11-17: it plays, on castLabs Electron 42; see
+  `DECISIONS.md`.)** Whether the service plays video in this shell on Linux
+  was Phase 0. The service refused Linux outright at its 2019
   launch over the DRM security level, then relaxed it [Sourced: press, 2019].
   The castLabs build on Linux reports an unverified platform to the DRM
   system [Sourced: castLabs release notes, via Tropic Video's study]. If the

@@ -8,9 +8,9 @@ they have been checked on this service.
 
 - [x] Shell loads the site signed out, with the layer on it
 - [x] The sign-in page opens and its email field takes the on-screen keyboard
-- [ ] Andrew signs in by hand in the shell
-- [ ] A title plays: read `spike-report.json`
-- [ ] Record the outcome in `DECISIONS.md`: this shell works, or switch to driving installed Chromium
+- [x] Andrew signs in by hand in the shell
+- [x] A title plays (on castLabs Electron 42; 44 fails on audio)
+- [x] Record the outcome in `DECISIONS.md`: this shell works on the 42 line
 
 **Done when:** a title plays in the shell, or the fallback shell is chosen with evidence.
 
@@ -19,19 +19,20 @@ they have been checked on this service.
 - [x] Code, tests and end-to-end run pass on invented fixtures (carried)
 - [ ] Privacy-choices pop-up from the remote (focus enters and stays in; a choice has not been made)
 - [ ] Profile picker, including a profile PIN
-- [ ] Home: bar, banner, rows, sideways scrolling, row memory
-- [ ] Title page: buttons, seasons, episodes, extras
+- [x] Home: bar, banner, rows, sideways scrolling (row memory not looked at)
+- [x] Title page: buttons, tabs, episode cards (season switching not tried)
 - [ ] Search with the on-screen keyboard
-- [ ] Outlines captured; first evidence-based adapter revision where the generic rules fail
+- [x] Outlines captured; first evidence-based adapter revision where the generic rules fail
 
 **Done when:** home → title → play using only a remote, on the live site.
 
 ## Phase 2: player
 
-- [ ] Play, pause and seek by key press
-- [ ] The site's player controls revealed and walked; audio and subtitles
+- [x] Play and pause by key press
+- [ ] Seek by key press
+- [x] The site's player controls revealed and walked; subtitles list (audio not opened)
 - [ ] Skip intro, skip recap and next-episode prompts
-- [ ] Back from the player
+- [x] Back from the player
 - [ ] Live or scheduled streams, if the account has any
 
 **Done when:** an episode is watched and the next one started from the couch.

@@ -52,6 +52,8 @@ mapping function that takes the current mode:
 - `geometry.ts` is pure. An aligned candidate (sharing at least 25% of the
   smaller element's extent on the cross axis) always beats an unaligned one.
   Left/right never leave the row. Up/down fall back to the nearest row.
+- `deep.ts` lets all of this see through open shadow roots, which the
+  service's player is built from.
 - `navigator.ts` gathers visible, enabled controls, drops wrappers that contain
   another candidate, and focuses with a `data-steamboat-focus` attribute plus real DOM focus.
 - The focus ring is drawn by the overlay over the element's rectangle, so it

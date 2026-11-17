@@ -2,6 +2,74 @@
 
 Update this at the end of every working session. Newest first.
 
+## 2026-11-17, later: signed in, playback proven, player usable from the remote
+
+Andrew signed in by hand and played a title. The agent then drove the signed-in
+app under `--automation`. Reasons for each change are in `DECISIONS.md`.
+
+### Changed
+
+- Electron pinned to castLabs 42.11.18 (44 claims an audio codec it cannot
+  play on Linux, and titles stopped at the site's Error Code 83).
+- http addresses on the service's host are loaded as https; only the window's
+  own navigations are checked against the allowlist.
+- Navigation follows open shadow roots (the site's player is built from them).
+- Back leaves the player by going back a page; adapter revision 1 (row
+  arrows); pinned bars no longer catch sideways moves; the first press on a
+  page goes to its content; menus opened in the player take focus and scroll.
+- **Shared code changed here and not in Tropic Video:** shadow roots, the
+  keyboard's position, sideways pinned bars, first press, menu focus and list
+  scrolling, own-page Back, the https upgrade, the frame-redirect rule.
+
+### Verified, and how
+
+| Claim | Evidence |
+|---|---|
+| Sign-in works in the shell (Andrew used a passkey) | his run reached the profile picker and the home page (paths in `spike-report.json`) |
+| **Protected playback works (Phase 0)** | Electron 42, `--automation`: media log shows video `h264` CENC 854x480, audio `aac` stereo, CDM attached; the video element had MediaKeys and advancing time, no error. Two titles, one of them the title that failed on 44 |
+| Error Code 83 on Electron 44 was the audio codec | media log on 44: audio `eac3` 5.1, both audio decoders refused it; screenshot of the site's error looked at, then deleted. A blank-window check: 44 says it supports `ec-3`, 42 says it does not |
+| Signed-in start loads the home page | 42 and 44: `/home`, about 3,100 elements |
+| Home: Down goes through the rows' cards, Left and Right run along a row and scroll it, Up returns | walk tool, focus read after each key, twelve cards along one row and back |
+| Title page: Play, watchlist, tabs, episode cards, footer, and back up | walk tool. After the change the first Down lands on Play |
+| Player: Space and Enter pause and resume | video element state before and after each key (on 44; on 42 only Enter on the pause control was tried, and it paused and resumed) |
+| Player: Down or Up shows the controls and every one can be reached: progress bar, back, title, Skip, rewind, play, forward, mute, next, settings, fullscreen | walk tool on 42 |
+| Player: settings opens with focus in its menu; the subtitles list walks and scrolls with focus | walk tool on 42: nine entries in order, each on screen. **No option was chosen** |
+| Back: first leaves the controls, second leaves the player for the title page | paths read after each press, on 42 |
+| Unit tests, rule check, end-to-end on fixtures | 201 tests; e2e all ok on 42 |
+
+### NOT verified
+
+- **Seeking.** Left and Right were pressed in the player on 44; the video
+  element's clock is not the programme's (it jumped from 52 to 23), so nothing
+  could be read from it. Whether the site's player seeks on those keys is
+  unknown. Left and Right on the focused progress bar do nothing.
+- What Andrew saw and heard in his run. The report shows two play pages with
+  audio errors (that was Electron 44) and a third that played.
+- Picture above 854x480; the advertising tier; live or scheduled streams.
+- Search and the on-screen keyboard on this site, the Watchlist, Movies,
+  Series and Originals pages, the profile picker and menu, a profile PIN.
+- Skip (seen and reachable, not pressed), next episode, the audio menu.
+- The privacy pop-up from the remote beyond moving in it (Andrew answered it
+  by hand), and the rest of sign-in with the on-screen keyboard.
+- Packages on Electron 42: none built. The earlier CI build was on 44.
+- The purchase guard's wording against the signed-in site.
+
+### Found, not fixed
+
+- Home: the first Down lands on the banner's mute button (top right) rather
+  than its main button; Up from a row passes the banner's fifteen small dots.
+- Down from the lowest visible entry of a player menu can drop onto the
+  control row behind it.
+- The walk tool's "stopped" line is a false alarm where neighbours look alike.
+
+### Next actions
+
+1. **Andrew:** `git pull`, `npm ci`, `npm start` in `~/Steamboat` and try it
+   by hand: was picture and sound right, and do Left and Right seek?
+2. Agent: search and the keyboard, the other browse pages, the profile menu,
+   seeking read from the player's own time display, Skip and next episode.
+3. Agent: build the packages on Electron 42 and launch one.
+
 ## 2026-11-17: project started (session 1, Andrew's Fedora VM)
 
 Andrew asked for a version of Tropic Video for a second service, called

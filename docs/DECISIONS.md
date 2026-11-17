@@ -92,3 +92,81 @@ as summarised, is about copying and scraping. Reading that as not covering a
 remote-control check is the agent's interpretation, not something Andrew was
 asked. He was told in the session report.
 **Reopen if:** Andrew prefers that only he drives the live site.
+
+## 2026-11-17: Phase 0 passed, on castLabs Electron 42, not 44
+
+**Result:** protected playback works in the shell in Andrew's Fedora VM.
+Andrew signed in by hand and played a title; the agent then played two more
+under `--automation`. Evidence from the browser's own media log and the video
+element: Widevine component 4.10.3112.0, a CDM attached, video `h264` marked
+CENC at 854x480, audio `aac` stereo, playback advancing, no error.
+**But not on Electron 44.** With castLabs 44.10.1 (Tropic Video's version)
+some titles stopped at the site's "Error Code 83". The media log showed why:
+the site sent `eac3` 5.1 audio and no decoder accepted it ("audio decoder
+initialization failed"). That build answers `true` to
+`MediaSource.isTypeSupported('audio/mp4; codecs="ec-3"')` and has nothing on
+Linux to decode it with. castLabs enabled (E)AC-3 at build time from v43 and
+say Linux support is uncertain (their issue 221).
+**Decision:** pin `electron` to castLabs **v42.11.18+wvcus** (Chromium 148,
+released 2026-10-24), which answers `false`; the site then sends AAC and the
+title that had failed plays. No runtime switch was found that turns the claim
+off in 44 (five feature names tried). Nothing about the page is changed: the
+browser simply no longer claims a codec it cannot play.
+**Costs:** an older Chromium, and the 42 line will stop getting releases at
+some point. Tropic Video stays on 44; its service has not shown this.
+**Not shown:** anything above 854x480 for protected video; Andrew's view of
+picture and sound (he has not said); bare metal.
+**Reopen when:** castLabs fixes the claim on Linux or ships a decoder (re-run
+the one-line check in a blank window), or the 42 line ends. Reporting it to
+castLabs is Andrew's call.
+
+## 2026-11-17: A plain-http address on an allowed host is loaded as https
+
+**Seen:** signed in, the service's front page redirects to `http://` on its
+own host. The app refused it and showed "This page was blocked".
+**Decision:** such an address is loaded in its https form instead
+(`httpsUpgrade`, unit-tested). Plain http is still never loaded. The log and
+the blocked notice now show the scheme when it is not https, since that can
+be the whole reason.
+
+## 2026-11-17: Only the window's own navigations are checked against the allowlist
+
+**Seen:** in Andrew's signed-in run the app refused redirects inside the
+site's measurement frames (two advertising hosts) and logged them.
+**Decision:** `will-redirect` is checked for the main frame only. What frames
+inside the page load is the site's business; cancelling them is filtering its
+traffic (Hard rule 4), and it put a "blocked" message up for something nobody
+pressed. The window itself still cannot leave the allowlist.
+**Checked:** a signed-in run under `--automation` logged no refusals. That run
+did not include signing in, where the frames were first seen.
+
+## 2026-11-17: Navigation sees through open shadow roots
+
+**Seen:** every control of the site's player is inside nested open shadow
+roots, where the document's own queries do not reach; the remote could reveal
+the controls but not focus one.
+**Decision:** candidate search, visibility, containment and "what has focus"
+follow open shadow roots (`src/layer/spatial/deep.ts`, unit-tested). Closed
+roots are left closed. This is shared code Tropic Video does not have.
+
+## 2026-11-17: Back leaves a player that is a page of its own by going back
+
+**Seen:** the site's player lives at its own address and ignores Escape, so
+Tropic Video's "send Escape" did nothing.
+**Decision:** when the address differs from the one the user was browsing at
+when playback started, Back goes back one page (`playerIsOwnPage`). A player
+laid over its page is still closed with Escape. No selector is involved.
+**Checked:** from the player, Back twice (controls, then player) returned to
+the title page.
+
+## 2026-11-17: Smaller navigation rules added from the live site
+
+- **Adapter revision 1:** the row arrows (`arrow-left`, `arrow-right`), shown
+  by `test/fixtures/outlines/home-rows.txt`. Without it Down landed on each
+  row's arrow instead of a card.
+- **Sideways moves ignore a pinned bar** lying across a scrolling row (the
+  home page's section tabs caught Left and Right).
+- **The first press on a page goes to page content**, not the pinned top bar,
+  unless the press is Up.
+- **A menu that opens from a player control takes focus**, and a list that
+  scrolls by itself is scrolled to its focused entry.
