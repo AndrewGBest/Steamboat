@@ -31,7 +31,8 @@ they have been checked on this service.
 - [x] Play and pause by key press
 - [x] Seek by key press
 - [x] The site's player controls revealed and walked; subtitles and audio lists (nothing chosen)
-- [ ] Skip intro, skip recap and next-episode prompts
+- [x] Next episode from the player's own button
+- [ ] Skip intro and skip recap; the prompt at an episode's end
 - [x] Back from the player
 - [ ] Live or scheduled streams, if the account has any
 
@@ -40,7 +41,7 @@ they have been checked on this service.
 ## Phase 3: HTPC and release
 
 - [ ] Sign-in with only a remote (Andrew)
-- [x] Packages built in CI; the AppImage launched and played (tarball and Flatpak not run)
+- [x] Packages built in CI; all three launched; the AppImage played
 - [ ] First release, when Andrew asks for one
 - [ ] Lawyer review of `LEGAL-GUARDRAILS.md` before promoting the project
 

@@ -2,6 +2,26 @@
 
 Update this at the end of every working session. Newest first.
 
+## 2026-11-17, fourth round: guard, next episode, all three packages
+
+Electron 42 under `--automation`, as before.
+
+| Claim | Evidence |
+|---|---|
+| Under automation nothing in the profile menu can be pressed (adapter revision 3) | live site: Enter on the menu's Help entry left the page and the open menu unchanged, and no navigation was attempted |
+| Back with the settings menu's slider view open | first Back leaves the controls, second closes the view (still in the player), third leaves the player |
+| Next episode from the remote | on a series: focus on the player's next button, Enter; a different play page loaded and played; Back returned to the title page |
+| The Flatpak bundle runs | from CI run 44132990283: installed for one user with its runtime from Flathub, started with `--automation`: Widevine component fetched inside the sandbox, the signed-out site loaded with the layer on it. It has its own data folder, so nobody is signed in there and **nothing was played**. Uninstalled afterwards, with its runtime and the Flathub remote |
+| The tarball build runs | same run: unpacked and started with `--automation`: signed-in home page, remote moved focus. Nothing was played. Removed |
+| Tests | 209 unit tests, rule check, end-to-end all ok |
+
+Skip intro is still untested: on a series episode, stepping forward ten
+seconds at a time for thirty presses, no Skip button was seen. Whether that
+episode has one is unknown.
+
+Side effect on the account: the agent's test plays show up in the profile's
+continue-watching row (four titles, one moved on by an episode).
+
 ## 2026-11-17, third round: seeking, menus, more pages
 
 Andrew asked for the remaining items. All checks below are on Electron 42
@@ -27,18 +47,14 @@ the reverse: right after a seek it is correct, between seeks it goes stale.
 ### Still not verified
 
 - Andrew's view of picture and sound. Picture above 854x480.
-- Skip intro (seen, reachable, not pressed), next episode, the end of an
-  episode, the advertising tier, live streams.
+- Skip intro (seen once, reachable, not pressed), the end of an episode, the advertising tier, live streams.
 - The Watchlist page with something in it (it showed one tab and the footer).
 - Switching profile, a profile PIN, the rest of sign-in by remote.
-- The tarball and the Flatpak bundle running; the purchase guard's wording.
-- Skip intro: one title was watched for its first minute and no Skip button came up.
+- Playback inside the Flatpak (it needs its own sign-in); the purchase
+  guard's wording beyond the profile menu.
 
 ### Found, not fixed
 
-- One of the settings menu's three entries opens a slider view with no menu
-  entries; with it open, the second Back leaves the player instead of closing
-  the view first.
 - On a title page reached from the player, one Back does nothing before the
   next goes home (the site seems to keep two history entries).
 - After the banner turns at its edge, focus can sit for one press on a
