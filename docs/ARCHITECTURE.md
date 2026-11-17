@@ -57,11 +57,16 @@ mapping function that takes the current mode:
 - `navigator.ts` gathers visible, enabled controls, drops wrappers that contain
   another candidate, and focuses with a `data-steamboat-focus` attribute plus real DOM focus.
 - The focus ring is drawn by the overlay over the element's rectangle, so it
-  does not depend on the site's styles.
+  does not depend on the site's styles. It is followed frame by frame only
+  while it or the page is moving, then looked at twice a second.
+- A move gathers its candidates afresh: nothing is cached between key
+  presses, so a page the site has re-rendered is never navigated from memory.
+  Within one move, ancestor styles are looked up once.
 
 ## Site adapter (`adapters/disneyplus.json`)
 
-Data only: lists of selectors for extra focusable elements, the search field,
+Data only (the user may supply a newer copy as `adapter.json` in the data
+folder; see `chooseAdapter`): lists of selectors for extra focusable elements, the search field,
 the player close control and purchase controls. Parsed defensively; bad
 selectors are dropped. With an empty adapter the generic heuristics run. It is
 empty today because no selector has been observed on this service's live site yet.

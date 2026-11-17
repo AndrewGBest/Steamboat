@@ -202,3 +202,71 @@ Andrew's alone (`VM-SETUP.md`).
 **Checked:** on the live site, Enter on the menu's Help entry under
 `--automation` left the page and the menu as they were.
 **Cost:** an agent cannot test profile switching. A person is not affected.
+
+## 2026-11-17: Review of the whole project
+
+Andrew asked for every choice to be looked at again: is it smart, is it light
+on the user's hardware, will it survive the service changing. What follows is
+what was kept, what was changed, and what stays a risk.
+
+### Kept, with the reason
+
+- **Wrapping the website with a generic layer.** Almost everything works by
+  general rules (geometry, roles, what is visible), not by knowing this
+  site. The adapter holds four selectors. That is the main protection
+  against the service changing, and it held: the same code drives two
+  services.
+- **Fresh candidates on every key press, no cache between presses.** A cache
+  would be faster and would be wrong whenever the site re-renders, which it
+  does constantly. Within a press the work was trimmed instead (below).
+- **Player control by key presses and pointer movement only.** Slower to get
+  right than calling the video element, and it is why seeking, pausing and
+  menus still follow the site's own rules (and will follow its changes).
+- **One window, sandboxed page, no API exposed, allowlisted navigation.**
+- **Page zoom for the TV scale.** The site lays itself out; nothing of its
+  styling is rewritten, so a redesign cannot break a stylesheet of ours.
+- **Electron 42.** See its own entry. It is the weakest point: an older
+  browser on a release line that will end.
+
+### Changed in the review
+
+| Was | Is | Why |
+|---|---|---|
+| The focus ring measured its target and wrote four styles on every frame, for as long as anything had focus | Followed frame by frame for 0.7 s after it or the page last moved, then looked at twice a second | A still screen kept the page awake 60 times a second |
+| The game-controller loop ran every frame whether or not a controller existed | Runs only while one is connected | Same |
+| Timers that look after the player ran while the window was hidden | They return at once when hidden, and tell the shell playback stopped | So sleep is not held off by a hidden window |
+| Each candidate asked for the style of up to twelve ancestors; containment was checked parent by parent | Ancestor answers are shared within a move and go all the way up; containment is one native check per shadow root | Most of a move's cost on a long page |
+| The profile menu was guarded under automation by selector only | Also by words (log out, account, edit profiles...) | The guard must not rest on the site keeping its markup |
+| The search key needed the adapter's selector | Falls back to a link whose address says search | Checked live with the selector taken out |
+| A site change needed a new build | A newer `adapter.json` in the data folder is used instead; never downloaded | Checked live |
+| Nothing stopped an Electron upgrade from bringing the audio problem back | The end-to-end run fails if the browser claims E-AC-3 on Linux | Runs in CI |
+| A saved outline said nothing about the adapter | Its second line counts what each selector matches | A renamed control shows as zero in a bug report |
+| A refused link put a message up every time it was tried | At most once in five seconds | |
+
+**Measured:** the app sitting still on the search page with focus on a card,
+all its processes, twenty seconds, twice each, in the VM (software
+rendering): about 9.4% of one core before, about 5.3% after. Not measured: a
+move's duration on a long page, memory, anything on real hardware.
+
+### Risks that remain, and what would be done
+
+- **The service asks for a verified platform, or stops serving Linux
+  browsers.** Then this shell cannot play. Fallback already designed: drive
+  the user's installed Chrome or Chromium and inject the same layer.
+- **The 42 release line ends, or the site refuses an old browser.** Move to
+  the then-current castLabs line if it has stopped claiming E-AC-3 on Linux
+  (the end-to-end check answers that), or to the fallback above.
+- **The site closes its shadow roots.** The player's controls would be out
+  of reach again. Play, pause and seek keys would still work; menus would
+  need the pointer.
+- **Test ids are renamed.** Rows' arrows take focus again and the profile
+  guard falls back to words. Usable; fixed by a new adapter file.
+- **Software video decoding on a weak box.** `hardwareDecode` is an opt-in
+  switch that has not been tried on real hardware. The site's background
+  previews are the largest load and are the site's to switch off.
+- **Two copies of the shared code.** Steamboat is now well ahead of Tropic
+  Video (shadow roots, idle behaviour, a dozen navigation rules). The longer
+  this lasts the harder the merge. A shared package, or porting back, is
+  Andrew's decision.
+- **Disney's terms** on modified clients and automated use: unchanged from
+  `LEGAL-GUARDRAILS.md`, still unreviewed by a lawyer.

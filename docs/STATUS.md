@@ -2,6 +2,43 @@
 
 Update this at the end of every working session. Newest first.
 
+## 2026-11-17, fifth round: small fixes and a review of the whole project
+
+Andrew asked for the noted small things to be fixed and every choice to be
+scrutinised for sense, load on the user's hardware and resilience to the
+service changing. The review and its table of changes are in `DECISIONS.md`
+("Review of the whole project").
+
+| Claim | Evidence |
+|---|---|
+| Idle load is lower | CPU time of all the app's processes over 20 s, still on the search page, twice each: about 9.4% of one core before, 5.3% after (VM, software rendering) |
+| Up and Down stay inside a player menu | live: eight presses down the subtitles list, each on the next entry, none on the control row |
+| One Back from a title page reached from the player goes home | live: paths read after each press |
+| Back with a menu open, as before | live: controls, menu, player |
+| A newer `adapter.json` in the data folder is used | live: a revision-99 copy without the search selector; the terminal said so, and the saved outline's header named revision 99 with its match counts. File removed afterwards |
+| The search key works without its selector | same run: the key still opened the search page with the field focused |
+| The build catches a browser that claims E-AC-3 | end-to-end run: new check passes on Electron 42 |
+| Tests | 222 unit tests, rule check, end-to-end all ok |
+
+### Not verified in this round
+
+- `hardwareDecode`: the VM has no usable VA-API (`video decode:
+  disabled_software` with or without it). Untried on real hardware.
+- The game-controller change: no controller here. The loop's start on
+  connection is by reading the code.
+- The focus ring's new following, by eye. The end-to-end run checks its
+  position after moves; smoothness on a TV is Andrew's to judge.
+- The banner's second settle pass, and the guard's new words on the live site.
+
+### Next actions
+
+1. **Andrew:** try it (`npm start`, or the AppImage from a new "Build
+   packages" run): picture and sound, how the ring follows, and on the TV
+   box whether `"hardwareDecode": true` helps.
+2. Decide what to do about the two copies of shared code.
+3. Agent: Skip intro when an episode with one is at hand; a first release
+   when asked.
+
 ## 2026-11-17, fourth round: guard, next episode, all three packages
 
 Electron 42 under `--automation`, as before.
@@ -55,10 +92,8 @@ the reverse: right after a seek it is correct, between seeks it goes stale.
 
 ### Found, not fixed
 
-- On a title page reached from the player, one Back does nothing before the
-  next goes home (the site seems to keep two history entries).
-- After the banner turns at its edge, focus can sit for one press on a
-  control that has collapsed; the next press recovers.
+- (Fixed in the fifth round: the extra Back on a title page; a second look
+  after the banner turns.)
 - Up from the first row passes a small tile button and the banner's watchlist
   button before the bar.
 

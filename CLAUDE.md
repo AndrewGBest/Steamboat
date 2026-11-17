@@ -82,6 +82,13 @@ Passing it is necessary, not sufficient.
 - **Fixtures are invented.** Pages in `test/fixtures/` are made-up layouts.
   Outlines captured from the live site may be committed only after checking
   they contain no titles, names or IDs (the sanitiser has tests; still look).
+- **Changing the Electron version** is a playback decision, not housekeeping.
+  The end-to-end run fails if the browser claims an audio format it cannot
+  decode (`DECISIONS.md`, the Electron pin); after any change, play a title
+  on the live site and read the media log before committing.
+- **Idle means idle.** No loop that runs every frame, and no timer that does
+  work while nothing changes or the window is hidden. Measure before and
+  after with the app sitting still on a page.
 - **Small dependencies.** Adding a runtime dependency needs a line in
   `docs/DECISIONS.md` saying why. Dev dependencies should stay few.
 - **Record decisions.** Any choice that a future session might re-argue goes in

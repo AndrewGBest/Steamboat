@@ -47,4 +47,9 @@ they have been checked on this service.
 
 ## Upkeep
 
+- [x] A site change can be patched without a new build (a user `adapter.json`; nothing is downloaded)
+- [x] The build fails if a new Electron claims an audio format it cannot play
+- [ ] Hardware video decode tried on real hardware (`hardwareDecode` is there, untested)
+- [ ] A physical game controller
+
 - [ ] Fixes to shared code offered back to Tropic Video, and its fixes brought here
