@@ -29,6 +29,7 @@ Steamboat, and for the repository and documents to be set up and work begun.
 | The real shell runs the layer on invented pages: navigation, pop-ups, player keys, on-screen keyboard, guard, notices | `npm run e2e` on the VM's Wayland desktop, all steps ok |
 | The Widevine component installs in this app's own data folder | terminal log of a `--spike` run: version 4.10.3112.0 |
 | The live site loads in the shell signed out, under `--automation` | DevTools: document on the service's host at `/en-ca`, `readyState` complete, about 4,400 elements, the layer's overlay present; viewport 962x541 |
+| CI and the package build run on GitHub | `gh run list`: CI green on each push; "Build packages" run 44120490371 green |
 | The user agent sent is the real Chromium on Linux with no app token | read from the page in that run |
 | The site shows a privacy-choices pop-up first, and the remote works in it | screenshot looked at, then deleted; Down and Right moved focus between its links and three buttons and never left it. **No choice was made** (it is Andrew's) |
 | The sign-in page opens and shows its email form | DevTools under `--automation`: window on the login host, one visible text field, no refused navigation in the log. The page was opened by address, because the privacy pop-up covers the home page's log-in button |
@@ -45,9 +46,10 @@ Steamboat, and for the repository and documents to be set up and work begun.
   sends the window to a host the allowlist refuses.
 - The privacy pop-up's buttons (none was pressed), and whether it comes back.
 - The purchase guard's wording against the real site. It is guesswork.
-- Packaging: no AppImage, tarball or Flatpak has been built from this
-  repository. The workflows are Tropic Video's with the name changed and have
-  not run here beyond CI.
+- The packages themselves. The "Build packages" workflow ran green on GitHub
+  and produced the artifact `steamboat-linux-x64` (about 336 MB), but it was
+  not downloaded and nothing in it was launched. The release workflow has not
+  run.
 - Everything Tropic Video lists as unverified about shared code (a physical
   game controller, X11 and gamescope sleep inhibition, a real 1080p TV).
 
